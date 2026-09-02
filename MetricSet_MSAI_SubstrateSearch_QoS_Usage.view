@@ -1,0 +1,1100 @@
+/* ---------------------------------------------------------------------------------------------------
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    Author: somaniva
+    Description: Substrate Search Service Scorecard Vertical 1: Usage and Quality of Service (QoS)
+                 Metrics
+    Data source: ImpressionView
+    Output: 1 row per impression (includes paginated requests as we need to track availability and
+            latency for these)
+
+------------------------------------------------------------------------------------------------------ */
+
+CREATE VIEW MetricSet_MSAI_SubstrateSearch_QoS_Usage
+SCHEMA
+(
+    RandomizationId : string,
+    UserId : string,
+    PassportUserId : string,
+    TenantId : string,
+    UserType : string,
+    ClientSessionId : string,
+    ConversationId : string,
+    ImpressionId : string,
+    EntryPoint : string,
+    Ring : string,
+    RouteName : string,
+    Flight : string,
+    RequestDateTimeInUTC : DateTime,
+    RequestDate : string,
+    HardwareSkuType : string,
+    Market : string,
+    RenderedGroupNameToGroupInfoMap: System.Collections.Generic.Dictionary<string, Microsoft.DataMining.Office.DataTypes.Success.GroupInfo>,
+    TriggerConditions : System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, bool>>,
+    Is3SRequest : bool,
+    IsLastRequestInLogicalImpression: bool,
+    Vertical: Microsoft.DataMining.Office.DataTypes.Vertical,
+    NormalizedLogicalId : string,
+
+    // Columns for Latency and Availability Metrics
+    E2EHttpStatus : string,
+    E2ETotalLatency : uint?,
+    CafeHttpStatus : string,
+    CafeTotalLatency : double,
+    GwsHttpStatus : string,
+    GwsTotalLatency : double,
+    LogicalImpressionIsRendered : bool?,
+    LogicalImpressionE2ELatency : uint?,
+    ResultsRendered : Microsoft.DataMining.Office.DataTypes.ResultsRendered,
+    QueryCategory : string,
+    ImpressionE2ERenderingLatency : uint?,
+    IsRendered : bool, // Request level rendering information from the V1 instrumentation contract
+
+    // Columns for Suggestion and Search Provider Metrics
+    ProviderNameStatusMap : System.Collections.Generic.Dictionary<string,string>,
+    ProviderNameLatencyMap : System.Collections.Generic.Dictionary<string,double>,
+
+    // This is a new column that is needed for Seedfinder and RetroAA.
+    // The filter bucket mapping is contained in this column.
+    FilterMap:string,
+
+    // Columns used for Debugging Scorecard
+    QueryLength: ushort,
+    QueryOffset: string,
+    ImpressionGuidToDataSourceMap: Microsoft.DataMining.Office.DataTypes.LogicalDataSource,
+    LogicalRenderedContent: Microsoft.DataMining.Office.DataTypes.ResultViewContainerList,
+    ResponseActions: Microsoft.DataMining.Office.DataTypes.ResponseActionList,
+    LastValidSuggestionsImpressionInConversation: bool,
+
+    // Columns used for Segments
+    InputInformation : Microsoft.DataMining.Office.DataTypes.InputInformation,
+    
+    //Server-side flights to trigger/filter if the user is on noth server-side and client-side flight
+    FlightInfo:string,
+
+    IsS500: bool,
+    UserAgent: string,
+    ClientVersion: string,
+    SearchPlatform: string,
+    RenderedContent: Microsoft.DataMining.Office.DataTypes.Content,
+    Page: uint?,
+    Scopes : string,
+    AdditionalInfoString : System.Collections.Generic.Dictionary<string,string>,
+    AppInfo : Microsoft.DataMining.Office.DataTypes.AppInfo,
+    IsEU : bool
+)
+PARAMS
+(
+    StartDate string,
+    EndDate string DEFAULT = "",
+    TreatmentAssignmentDataSource string DEFAULT = "odinvariantconfigv2",
+    Flights string,
+    EntryPoints string DEFAULT = "", // optionally allow us to filter to selected entrypoints (semicolon separated).
+    LogicalEntryPointsForUsingComputedCVID string DEFAULT = "", // e.g. "exchangeshared.outlookmobile.android.email;exchangeshared.outlookmobile.ios.email"
+    Rings string DEFAULT = "", // optionally allow us to filter to selected rings (semicolon separated).
+    RemoveBotTraffic bool DEFAULT = true,
+    RemoveBotTrafficStr string DEFAULT = "true",
+    UsePUIDForConsumerData bool DEFAULT = true,
+    UsePUIDForConsumerDataStr string DEFAULT = "true",
+    UseSampleData bool DEFAULT = false,
+    UseSampleDataStr string DEFAULT = "false",
+    DailyWithHourlyFallback bool DEFAULT = false,
+    DailyWithHourlyFallbackStr string DEFAULT = "false",
+    FlightFilteringAtSessionLevel bool DEFAULT = false,
+    FlightFilteringAtSessionLevelStr string DEFAULT = "false",
+    RemoveSingleSuggestionSessions bool DEFAULT = false,
+    RemoveSingleSuggestionSessionsStr string DEFAULT = "false",
+    FilterDevicesWithMultiplePuids bool DEFAULT = false, // Hook to filter devices with multiple puids (used for olo_puid)
+    FilterDevicesWithMultiplePuidsStr string DEFAULT = "false", // Hook to filter devices with multiple puids (used for olo_puid)
+    ThresholdForFilteringDevicesWithMultiplePuids int DEFAULT = 1, // Threshold count to determine which devices to filter (used for olo_puid)
+    FilterPuidsWithMultipleDevices bool DEFAULT = true, // Hook to filter puids with multiple devices (used for olo_puid)
+    FilterPuidsWithMultipleDevicesStr string DEFAULT = "true", // Hook to filter puids with multiple devices (used for olo_puid)
+    Workload string DEFAULT = "Outlook;Teams",
+    NoFlightFilter bool DEFAULT = false, // Do not filter for flights. Set to true for Seedfinder and RetroAA analyses.
+    NoFlightFilterStr string DEFAULT = "false", // Do not filter for flights. Set to true for Seedfinder and RetroAA analyses.
+    FlightAppId string DEFAULT = "Search",
+    CustomInput string DEFAULT = "shares/exchange.storage.prod/local",
+    TrafficFiltersPartner string DEFAULT = "", // e.g. "exchangeshared,officeshared"
+    TrafficFiltersScenario string DEFAULT = "", // e.g. "owa,owa.react,owa.react.compose"
+    TrafficFiltersDeployRing string DEFAULT = "", // e.g. "WW,SDFV2"
+    LocalRunViaE2EValidationTool bool DEFAULT = false,
+    LocalRunViaE2EValidationToolStr string DEFAULT = "false",
+    RunOnCachedTAData bool DEFAULT = false,
+    RunOnCachedTADataStr string DEFAULT = "false",
+    MismatchPatchEnabled bool DEFAULT = false,
+    MismatchPatchEnabledStr string DEFAULT = "false",
+    Region string DEFAULT = "ROW",  // "ROW" or "EU"
+    EnableLivDebug bool DEFAULT = false,
+    EnableLivDebugStr string DEFAULT = "false",
+    EUCutOffEnable bool DEFAULT = false,
+    EUCutOffEnableStr string DEFAULT = "false",
+    UseCafe bool DEFAULT = false
+)
+AS
+BEGIN
+    #DECLARE Scorecard_TreatmentAssignmentViewPath string = "/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/Scorecard_TreatmentAssignment.view";
+    #IF(@Region == "EU")
+        #SET Scorecard_TreatmentAssignmentViewPath = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/Scorecard_TreatmentAssignment.view";
+        #IF(@CustomInput == "shares/exchange.storage.prod/local")
+            #SET CustomInput = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local";
+        #ENDIF
+        
+        // Short-term fix for ICM 788450698: under metaosflight, load ScorecardUtils variant whose Newtonsoft.Json.dll matches CopilotUsageView's CopilotDataFusionViewV2 path to avoid assembly conflicts.
+        #IF(@TreatmentAssignmentDataSource == "metaosflight")
+            MODULE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_CopilotUsage_EU.module";
+        #ELSE
+            MODULE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_EU.module";
+        #ENDIF
+    #ELSE
+        #IF(@TreatmentAssignmentDataSource == "metaosflight")
+            MODULE @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_CopilotUsage.module";
+        #ELSE
+            MODULE @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils.module";
+        #ENDIF
+    #ENDIF
+
+    USING Newtonsoft.Json;
+    USING DataMining.Fundamental;
+    USING ScorecardUtility;
+    USING ScorecardUtility.Helpers;
+
+    // Setting up boolean as string parameters. Using OR operator if defaults to FALSE otherwise use AND operator.
+
+    #SET @UseSampleData = (@UseSampleData OR bool.Parse(@UseSampleDataStr));
+    #SET @FilterDevicesWithMultiplePuids = (@FilterDevicesWithMultiplePuids OR bool.Parse(@FilterDevicesWithMultiplePuidsStr));
+    #SET @NoFlightFilter = (@NoFlightFilter OR bool.Parse(@NoFlightFilterStr));
+    #SET @LocalRunViaE2EValidationTool = (@LocalRunViaE2EValidationTool OR bool.Parse(@LocalRunViaE2EValidationToolStr));
+    #SET @RunOnCachedTAData = (@RunOnCachedTAData OR bool.Parse(@RunOnCachedTADataStr));
+    #SET @MismatchPatchEnabled = (@MismatchPatchEnabled OR bool.Parse(@MismatchPatchEnabledStr));
+    #SET @EUCutOffEnable = (@EUCutOffEnable OR bool.Parse(@EUCutOffEnableStr));
+    #SET @RemoveSingleSuggestionSessions = (@RemoveSingleSuggestionSessions OR bool.Parse(@RemoveSingleSuggestionSessionsStr));
+    #SET @DailyWithHourlyFallback = (@DailyWithHourlyFallback OR bool.Parse(@DailyWithHourlyFallbackStr));
+    #SET @FlightFilteringAtSessionLevel = (@FlightFilteringAtSessionLevel OR bool.Parse(@FlightFilteringAtSessionLevelStr));
+    #SET @EnableLivDebug = (@EnableLivDebug OR bool.Parse(@EnableLivDebugStr));
+    #SET @RemoveBotTraffic = (@RemoveBotTraffic AND bool.Parse(@RemoveBotTrafficStr));
+    #SET @UsePUIDForConsumerData = (@UsePUIDForConsumerData AND bool.Parse(@UsePUIDForConsumerDataStr));
+    #SET @FilterPuidsWithMultipleDevices = (@FilterPuidsWithMultipleDevices AND bool.Parse(@FilterPuidsWithMultipleDevicesStr));
+
+    // Smart Scheduling Setup
+    #IF(@EntryPoints == "{ApplicableDataSourceParameterOverrides.SearchSlowQoSEntryPointsManagementGroupOverride}" || @EntryPoints == "{ApplicableDataSourceParameterOverrides.SearchFastQoSEntryPointsManagementGroupOverride}")
+        #ERROR "3S Analysis Template was scheduled in Control Tower, but management group has not specified default list of entrypoints. Please contact 3SInstrumentationTeam@service.microsoft.com for help.";
+    #ENDIF
+    #IF(@TrafficFiltersPartner == "{TrafficFilters.Partner}")
+        #SET TrafficFiltersPartner = "";
+    #ENDIF
+    #IF(@TrafficFiltersScenario == "{TrafficFilters.Scenario}")
+        #SET TrafficFiltersScenario = "";
+    #ENDIF
+    #IF(@TrafficFiltersDeployRing == "{TrafficFilters.DeployRing}")
+        #SET TrafficFiltersDeployRing = "";
+    #ENDIF
+
+    // Declare Constants variable
+    #DECLARE SessionEnd string = "sessionend";
+
+    #DECLARE ExchangesharedScenarios ARRAY<string>;
+    #SET ExchangesharedScenarios = new ARRAY<string>("owa;owa.react;owa.react.mini;outlookuniversal.email;outlookmobile.android.email;outlookmobile.ios.email;outlookmobile.android.email.cloudcache;outlookmobile.ios.email.cloudcache;outlookmac.email;outlookmac.email.cloudcache;outlookmobile.android.people.compose;outlookmobile.ios.people.compose;outlookmac.people.compose;outlookmac.people.atmentions;owa.react.compose".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE OfficesharedScenarios ARRAY<string>;
+    #SET OfficesharedScenarios = new ARRAY<string>("outlookdesktop;outlookdesktop.compose;outlookdesktop.atmentions;outlookdesktop.people;officemobilefiles;aihub.mobile.android.search;aihub.mobile.ios.search".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE SharepointsharedScenarios ARRAY<string>;
+    #SET SharepointsharedScenarios = new ARRAY<string>("sphomeweb;msw;teamsitesearch;hubsitesearch;commsitesearch;onedriveweb;transcript".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE OfficecomScenarios ARRAY<string>;
+    #SET OfficecomScenarios = new ARRAY<string>("officehome;aihub.search".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE TeamsScenarios ARRAY<string>;
+    #SET TeamsScenarios = new ARRAY<string>("powerbar;powerbar.goto;peoplepicker.newchat;peoplepicker.addtochat;teams.peoplepicker.addtosharedchannel;teams.peoplecache;mobileandroid;mobileios".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE BingcomScenarios ARRAY<string>;
+    #SET BingcomScenarios = new ARRAY<string>("msb.ux.workserp;msb.ux.webserp".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE MsaiEdgeExperiencesScenarios ARRAY<string>;
+    #SET MsaiEdgeExperiencesScenarios = new ARRAY<string>("addressbar;addressbar.work".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE AugmentationLoopScenarios ARRAY<string>;
+    #SET AugmentationLoopScenarios = new ARRAY<string>("outlook.web.oa;teams.android.oa;teams.ios.oa".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE SydneyScenarios ARRAY<string>;
+    #SET SydneyScenarios = new ARRAY<string>("sydney".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE M365ShellScenarios ARRAY<string>;
+    #SET M365ShellScenarios = new ARRAY<string>("m365shell.peopleflyout;m365shell.filesintaskbar".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+
+    // For sharepoint classic, the service scenario tags are different compared to how the data is cooked. The Partner tag is always "sharepointshared"
+    // At the data pipeline, all greenland (aka SP classic) service scenario tags get resolved to 3 possible tags.
+    // Complexity here is - In ControlTower filters, the serviceTags will be provided - but for scorecards - dataPipelineTags needs to be used
+    #DECLARE SharepointClassic_Service_ScenarioTags ARRAY<string>;
+    #SET SharepointClassic_Service_ScenarioTags = new ARRAY<string>("g110_sfqev2_singlegeo_forwarded;g110_sfqev2_multigeo_forwarded".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #DECLARE SharepointClassic_Data_ScenarioTags ARRAY<string>;
+    #SET SharepointClassic_Data_ScenarioTags = new ARRAY<string>("spclassic_basicsearchcenter;spclassic_enterprisesearchcenter;spclassic_sitesearch".Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+
+    // Pass traffic filters sent from Control Tower
+    // 1. Check if EntryPoints have been passed. If EntryPoints contains both slow and fast entrypoints then intersect with EntryPoints list.
+    // 2. Check if DeployRings have been passed. If so, then override Rings parameter.
+    #SET TrafficFiltersPartner = @TrafficFiltersPartner.ToLowerInvariant();
+    #SET TrafficFiltersScenario = @TrafficFiltersScenario.ToLowerInvariant();
+    #DECLARE TrafficFiltersEntryPoints string = "";
+    #IF(!string.IsNullOrEmpty(@TrafficFiltersPartner) && string.IsNullOrEmpty(@TrafficFiltersScenario))
+        #IF(@TrafficFiltersPartner.Split(',').Contains("exchangeshared"))
+            #SET TrafficFiltersEntryPoints = string.Join(";", @ExchangesharedScenarios.Select(x => "exchangeshared" + "." + x));
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("officeshared"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @OfficesharedScenarios.Select(x => "officeshared" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @OfficesharedScenarios.Select(x => "officeshared" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("sharepointshared"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @SharepointsharedScenarios.Select(x => "sharepointshared" + "." + x));
+            #ELSE
+                // Modern sharepoint entrypoints
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @SharepointsharedScenarios.Select(x => "sharepointshared" + "." + x));
+            #ENDIF
+
+            // Classic sharepoint entrypoints
+            #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @SharepointClassic_Data_ScenarioTags.Select(x => "sharepointshared" + "." + x));
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("officecom"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @OfficecomScenarios.Select(x => "officecom" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @OfficecomScenarios.Select(x => "officecom" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("teams"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @TeamsScenarios.Select(x => "teams" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @TeamsScenarios.Select(x => "teams" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("bingcom"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @BingcomScenarios.Select(x => "bingcom" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @BingcomScenarios.Select(x => "bingcom" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("msaiedgeexperiences"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @MsaiEdgeExperiencesScenarios.Select(x => "msaiedgeexperiences" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @MsaiEdgeExperiencesScenarios.Select(x => "msaiedgeexperiences" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("augmentationloop"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @AugmentationLoopScenarios.Select(x => "augmentationloop" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @AugmentationLoopScenarios.Select(x => "augmentationloop" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("sydney"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @SydneyScenarios.Select(x => "sydney" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @SydneyScenarios.Select(x => "sydney" + "." + x));
+            #ENDIF
+        #ENDIF
+        #IF(@TrafficFiltersPartner.Split(',').Contains("m365shell"))
+            #IF(string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+                #SET TrafficFiltersEntryPoints = string.Join(";", @M365ShellScenarios.Select(x => "m365shell" + "." + x));
+            #ELSE
+                #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @M365ShellScenarios.Select(x => "m365shell" + "." + x));
+            #ENDIF
+        #ENDIF
+    #ELSEIF(string.IsNullOrEmpty(@TrafficFiltersPartner) && !string.IsNullOrEmpty(@TrafficFiltersScenario))
+        // If sharepointClassic_SERVICE_scenarioTags are present - then add the sharepointClassic_DATA_scenarioTags
+        #SET TrafficFiltersEntryPoints = string.Join(";", @TrafficFiltersScenario.Split(',').Select(
+            x => @ExchangesharedScenarios.Contains(x) ? "exchangeshared" + "." + x 
+            : @OfficesharedScenarios.Contains(x) ? "officeshared" + "." + x 
+            : @SharepointsharedScenarios.Contains(x) ? "sharepointshared" + "." + x 
+            : @OfficecomScenarios.Contains(x) ? "officecom" + "." + x 
+            : @BingcomScenarios.Contains(x) ? "bingcom" + "." + x 
+            : @MsaiEdgeExperiencesScenarios.Contains(x) ? "msaiedgeexperiences" + "." + x 
+            : @TeamsScenarios.Contains(x) ? "teams" + "." + x 
+            : @AugmentationLoopScenarios.Contains(x) ? "augmentationloop" + "." + x 
+            : @SydneyScenarios.Contains(x) ? "sydney" + "." + x 
+            : @M365ShellScenarios.Contains(x) ? "m365shell" + "." + x 
+            : @SharepointClassic_Service_ScenarioTags.Contains(x) ?  string.Join(";", @SharepointClassic_Data_ScenarioTags.Select(y => "sharepointshared" + "." + y)) 
+            : x));
+    #ELSEIF(!string.IsNullOrEmpty(@TrafficFiltersPartner) && !string.IsNullOrEmpty(@TrafficFiltersScenario))
+        #SET TrafficFiltersEntryPoints = string.Join(";", @TrafficFiltersPartner.Split(',').SelectMany(x => @TrafficFiltersScenario.Split(','), (x,y) => x + "." + y).ToList());
+
+        // Check for presence of sharepointClassic_SERVICE_scenarioTags and if present, then add the sharepointClassic_DATA_scenarioTags
+        #IF(@TrafficFiltersScenario.Split(',').Any(x => @SharepointClassic_Service_ScenarioTags.Contains(x)))
+            // Classic sharepoint entrypoints
+            #SET TrafficFiltersEntryPoints = @TrafficFiltersEntryPoints + ";" + string.Join(";", @SharepointClassic_Data_ScenarioTags.Select(x => "sharepointshared" + "." + x));
+        #ENDIF
+    #ENDIF
+
+    #IF(!string.IsNullOrEmpty(@TrafficFiltersEntryPoints))
+        #DECLARE IntersectingEntryPoints string = string.Join(";", @EntryPoints.Split(';').Intersect(@TrafficFiltersEntryPoints.Split(';')));
+        #IF(!string.IsNullOrEmpty(@IntersectingEntryPoints))
+            #SET EntryPoints = @IntersectingEntryPoints;
+        #ELSE
+            #ERROR "Intersecting entrypoints between traffic filters and scorecard default entrypoints job is empty";
+        #ENDIF
+    #ENDIF
+
+    #IF(!string.IsNullOrEmpty(@TrafficFiltersDeployRing))
+        #SET Rings = string.Join(";", @TrafficFiltersDeployRing.ToUpperInvariant().Split(','));
+    #ENDIF
+
+    // Argument checks
+    #IF(@StartDate == "")
+        #SET StartDate = DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd");
+    #ENDIF
+    #IF(@EndDate == "")
+        #SET EndDate = @StartDate;
+    #ENDIF
+
+    // Temp fix for metaos: Override the params for metaos.
+    
+    #IF ((@TreatmentAssignmentDataSource=="metaosflight") OR (@TreatmentAssignmentDataSource=="3sflight") OR (@TreatmentAssignmentDataSource=="aihubflight") OR (@TreatmentAssignmentDataSource=="nitrov2")) //3sflight temp change
+        #SET @NoFlightFilter=true;
+        #SET @FlightFilteringAtSessionLevel=false;
+    #ENDIF
+
+    data = VIEW @"SQI_SubstrateSearch_RawLogs.view"
+        PARAMS
+        (
+                StartDate=@StartDate,
+                EndDate=@EndDate,
+                RemoveBotTraffic=@RemoveBotTraffic,
+                EntryPoints=@EntryPoints,
+                LogicalEntryPointsForUsingComputedCVID = @LogicalEntryPointsForUsingComputedCVID,
+                Rings=@Rings,
+                UsePUIDForConsumerData=@UsePUIDForConsumerData,
+                TreatmentAssignmentDataSource = @TreatmentAssignmentDataSource,
+                Flights = @Flights,
+                UseSampleData = @UseSampleData,
+                DailyWithHourlyFallback = @DailyWithHourlyFallback,
+                FlightFilteringAtSessionLevel = @FlightFilteringAtSessionLevel,
+                LimitSearchRequestsToEmailSearch = false,
+                FilterDevicesWithMultiplePuids=@FilterDevicesWithMultiplePuids,
+                ThresholdForFilteringDevicesWithMultiplePuids=@ThresholdForFilteringDevicesWithMultiplePuids,
+                FilterPuidsWithMultipleDevices=@FilterPuidsWithMultipleDevices,
+                Workload = @Workload,
+                NoFlightFilter = @NoFlightFilter,
+                FlightAppId = @FlightAppId,
+                CustomInput = @CustomInput,
+                LocalRunViaE2EValidationTool = @LocalRunViaE2EValidationTool,
+                MismatchPatchEnabled =@MismatchPatchEnabled,
+                Region =  @Region,
+                EUCutOffEnable = @EUCutOffEnable,
+                UseCafe = @UseCafe
+        );
+
+    data =
+        SELECT RandomizationId,
+               UserId,
+               ExternalDirectoryObjectId,
+               TenantId,
+               UserType,
+               ClientSessionId,
+               NormalizedConversationId AS ConversationId,
+               NormalizedImpressionGuid AS ImpressionId,
+               EntryPoint,
+               Ring,
+               RouteName,
+               Flight,
+               QueryLength,
+               QueryOffset,
+               RequestDateTimeInUTC,
+               RequestDateTimeInUtcTicks,
+               RequestDate,
+               HardwareSkuType,
+               RenderedGroupNameToGroupInfoMap,
+               IF(string.IsNullOrEmpty(TriggerConditions), null, JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, bool>>>(TriggerConditions)) AS TriggerConditions,
+               Is3SRequest,
+               IsLastRequestInLogicalImpression,
+               Vertical,
+               NormalizedLogicalId,
+               ClientPerceivedHttpStatus AS E2EHttpStatus,
+               E2ELatency AS E2ETotalLatency,
+               CafeHttpStatus,
+               CafeTotalLatency,
+               HttpStatus AS GwsHttpStatus,
+               ServerLatency ?? (double)0 AS GwsTotalLatency,
+               LogicalImpressionIsRendered,
+               LogicalImpressionE2ELatency,
+               ResultsRendered,
+               DataSourceMap,
+               ImpressionGuidToDataSourceMap,
+               LogicalRenderedContent,
+               ResponseActions,
+               InputInformation,
+               QueryCategory,
+               ImpressionE2ERenderingLatency,
+               FlightId,
+               IsRendered,
+               IsS500,
+               UserAgent,
+               ClientVersion,
+               SearchPlatform,
+               RenderedContent,
+               Page,
+               ProviderNameStatusMap,
+               ProviderNameLatencyMap,
+               Scopes,
+               IF(string.IsNullOrEmpty(RequestContextInformation), null, Utility.GetAdditionalInfoStringFromRequestContext(RequestContextInformation)) AS AdditionalInfoString,
+               AppInfo,
+               IsEU ?? false AS IsEU
+        FROM data;
+
+    // TEMP fix for metaos:
+    #IF((@TreatmentAssignmentDataSource=="metaosflight") OR (@TreatmentAssignmentDataSource=="3sflight") OR (@TreatmentAssignmentDataSource=="aihubflight") OR (@TreatmentAssignmentDataSource=="nitrov2")) //3sflight temp change
+        #SET @NoFlightFilter=false;
+        #SET @FlightFilteringAtSessionLevel=true;
+    #ENDIF
+
+    #IF (@FlightFilteringAtSessionLevel AND !@NoFlightFilter)
+        dataSetToFilterFlight =
+            SELECT
+                UserId,
+                UserType,
+                ClientSessionId,
+                RequestDateTimeInUTC,
+                RequestDateTimeInUtcTicks,
+                EntryPoint,
+                ROW_NUMBER() OVER (PARTITION BY UserId, ClientSessionId ORDER BY RequestDateTimeInUtcTicks ASC) AS __rank
+            FROM data
+            HAVING __rank == 1;
+
+        #IF((@TreatmentAssignmentDataSource != "metaosflight") AND (@TreatmentAssignmentDataSource!="3sflight") AND (@TreatmentAssignmentDataSource!="aihubflight") AND (@TreatmentAssignmentDataSource!="nitrov2")) //3sflight temp change, must remove when server version is done
+            treatmentAssignment = VIEW @Scorecard_TreatmentAssignmentViewPath
+                PARAMS
+                (
+                    StartDate = @StartDate,
+                    EndDate = @EndDate,
+                    TreatmentAssignmentDataSource = @TreatmentAssignmentDataSource,
+                    Flights = @Flights.ToUpper(),
+                    FlightsSeparator = '|',
+                    FlightAppId = @FlightAppId,
+                    UsePUIDForConsumerData=@UsePUIDForConsumerData,
+                    RunOnCachedTAData=@RunOnCachedTAData,
+                    MismatchPatchEnabled=@MismatchPatchEnabled,
+                    Region =  @Region
+                );
+        #ENDIF
+
+        // Do not filter user-flights based on session start time for fastsearch(ecsconfig)
+        #IF(@TreatmentAssignmentDataSource == "fastsearch")
+            // Office365Category is one of the following: "TeamSiteSearch", "CommSiteSearch", "MSW", "HubSiteSearch", "SPHomeWeb", "SharePointShared", "officehome"
+            treatmentAssignment =
+                SELECT
+                    IF (Office365Category == "TeamSiteSearch", "sharepointshared.teamsitesearch", IF (Office365Category == "CommSiteSearch", "sharepointshared.commsitesearch", IF (Office365Category == "MSW", "sharepointshared.msw", IF (Office365Category == "HubSiteSearch", "sharepointshared.hubsitesearch", IF (Office365Category == "SPHomeWeb", "sharepointshared.sphomeweb", IF (Office365Category == "officehome", "officecom.officehome", string.Empty)))))) AS EntryPoint,
+                    ExperimentalUnitId,
+                    Flight,
+                    OMSTenantId,
+                    Timestamp
+                FROM treatmentAssignment;
+
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    treatmentAssignment.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN treatmentAssignment
+                ON dataSetToFilterFlight.EntryPoint == treatmentAssignment.EntryPoint AND dataSetToFilterFlight.UserId == treatmentAssignment.ExperimentalUnitId;
+        #ELSEIF(@TreatmentAssignmentDataSource == "msbsearch" OR @TreatmentAssignmentDataSource == "edgesearch")
+
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    treatmentAssignment.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN treatmentAssignment
+                ON dataSetToFilterFlight.EntryPoint == treatmentAssignment.Office365Category AND dataSetToFilterFlight.UserId == treatmentAssignment.ExperimentalUnitId;
+        
+        #ELSEIF(@TreatmentAssignmentDataSource == "aihubflight")
+            #DECLARE flightsSeparated ARRAY<string>;
+            #IF(@Flights.Contains(":"))
+                // If flights contains allocation id delimiter, only pick those flights that have allocation id to avoid alias duplicates
+                #SET flightsSeparated = new ARRAY<string>((from s in @Flights.Split('|') where s.Contains(":") select s.ToUpperInvariant()));
+            #ELSE
+                #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select s.ToUpperInvariant());
+            #ENDIF
+
+            #DECLARE StartDateStr string = DateTime.Parse(@StartDate).ToString("yyyy-MM-dd");
+            #DECLARE EndDateStr string = DateTime.Parse(@EndDate).ToString("yyyy-MM-dd");
+            #DECLARE Start DateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateStr + "T00:00:00Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc); 
+            #DECLARE End DateTime = DateTime.SpecifyKind(DateTime.Parse(@EndDateStr + "T23:59:59Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+
+            #IF (@Region == "EU")
+                #DECLARE OrgIdPuidFlightMappingPath string = "abfss://shares@ideasneuprodsharetorus.dfs.core.windows.net/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/link/Views/v1/OrgIdPuidFlightMapping.view";
+            #ELSE
+                #IF(EXISTS("/shares/IDEAs.Prod.Data/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view"))
+                    #DECLARE OrgIdPuidFlightMappingPath string = "/shares/IDEAs.Prod.Data/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view";
+                #ELSE
+                    #DECLARE OrgIdPuidFlightMappingPath string = "/shares/IDEAs.Prod.Data/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view";
+                #ENDIF
+            #ENDIF
+
+            OrgIdPuidFlightMapping =
+                VIEW @OrgIdPuidFlightMappingPath
+                PARAMS
+                (
+                    StartTime = @Start,
+                    EndTime = @End,
+                    TelemetrySource = "OfficeHomeCommercialFlights"
+                );
+
+            AiHubFlights =
+                SELECT OrgIdPUID.ToUpperInvariant() AS OrgIdPUID,
+                       FlightId.ToUpperInvariant() AS Flights,
+                       EventDate
+                FROM OrgIdPuidFlightMapping
+                WHERE !string.IsNullOrEmpty(OrgIdPUID) && !string.IsNullOrWhiteSpace(FlightId);
+
+            AiHubFlights =
+                SELECT OrgIdPUID,
+                    Flight,
+                    EventDate
+                FROM AiHubFlights CROSS APPLY Flights.Split(',') AS Flight;
+
+            AiHubFlights =
+                SELECT * FROM AiHubFlights
+                WHERE (!string.IsNullOrWhiteSpace(Flight) && @flightsSeparated.Contains(Flight));
+
+            AiHubFlights =
+                SELECT
+                    OrgIdPUID AS ExperimentalUnitId,
+                    Flight,
+                    MIN(EventDate) AS Timestamp
+                FROM AiHubFlights
+                GROUP BY ExperimentalUnitId, Flight;
+
+            // Filter out users with >1 flight config in the date range
+            AiHubFlightCounts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM AiHubFlights
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+
+            AiHubFlights =
+                SELECT ta.*
+                FROM AiHubFlights AS ta
+                LEFT SEMIJOIN AiHubFlightCounts AS tac
+                ON ta.ExperimentalUnitId == tac.ExperimentalUnitId;
+
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    AiHubFlights.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN AiHubFlights
+                ON
+                dataSetToFilterFlight.UserId == AiHubFlights.ExperimentalUnitId;
+
+        #ELSEIF(@TreatmentAssignmentDataSource == "nitrov2")
+            #DECLARE flightsSeparated ARRAY<string>;
+            #IF(@Flights.Contains(":"))
+                // If flights contains allocation id delimiter, only pick those flights that have allocation id to avoid alias duplicates
+                #SET flightsSeparated = new ARRAY<string>((from s in @Flights.Split('|') where s.Contains(":") select s.ToUpperInvariant()));
+            #ELSE
+                #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select s.ToUpperInvariant());
+            #ENDIF
+
+            #DECLARE StartDateStr string = DateTime.Parse(@StartDate).ToString("yyyy-MM-dd");
+            #DECLARE EndDateStr string = DateTime.Parse(@EndDate).ToString("yyyy-MM-dd");
+            #DECLARE Start DateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateStr + "T00:00:00Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+            #DECLARE End DateTime = DateTime.SpecifyKind(DateTime.Parse(@EndDateStr + "T00:00:00Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc).AddDays(1);
+
+            #IF (@Region == "EU")
+                #DECLARE ExpCommercialUserFlightsViewPath string = "abfss://shares@ideasneuprodsharetorus.dfs.core.windows.net/Publish.Acquisitions.User.Commercial.Experimentation.ExpFlights.ExpCommercialUserFlightsView/link/Views/v1/ExpCommercialUserFlightsView.view";
+            #ELSE
+                #DECLARE ExpCommercialUserFlightsViewPath string = "/shares/IDEAs.Prod.Data/Publish.Acquisitions.User.Commercial.Experimentation.ExpFlights.ExpCommercialUserFlightsView/Views/v1/ExpCommercialUserFlightsView.view";
+            #ENDIF
+
+            OfficeHomeExpFlights =
+                VIEW @ExpCommercialUserFlightsViewPath
+                PARAMS
+                (
+                    StartDate = @Start,
+                    EndDate = @End,
+                    FlightSources = "OfficeHome"
+                );
+
+            NitroV2Flights =
+                SELECT OrgIdPUIDHex.ToUpperInvariant() AS OrgIdPUID,
+                       ExperimentFlightId.ToUpperInvariant() AS Flight,
+                       MinTimestamp AS EventDate
+                FROM OfficeHomeExpFlights
+                WHERE !string.IsNullOrEmpty(OrgIdPUIDHex) && !string.IsNullOrWhiteSpace(ExperimentFlightId);
+
+            NitroV2Flights =
+                SELECT * FROM NitroV2Flights
+                WHERE (!string.IsNullOrWhiteSpace(Flight) && @flightsSeparated.Contains(Flight));
+
+            NitroV2Flights =
+                SELECT
+                    OrgIdPUID AS ExperimentalUnitId,
+                    Flight,
+                    MIN(EventDate) AS Timestamp
+                FROM NitroV2Flights
+                GROUP BY ExperimentalUnitId, Flight;
+
+            // Filter out users with >1 flight config in the date range
+            NitroV2FlightCounts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM NitroV2Flights
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+
+            NitroV2Flights =
+                SELECT ta.*
+                FROM NitroV2Flights AS ta
+                LEFT SEMIJOIN NitroV2FlightCounts AS tac
+                ON ta.ExperimentalUnitId == tac.ExperimentalUnitId;
+
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    NitroV2Flights.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN NitroV2Flights
+                ON
+                dataSetToFilterFlight.UserId == NitroV2Flights.ExperimentalUnitId;
+
+        // Add metaOS filtering here, as dataSetToFilterFlight and the final join above. 
+        #ELSEIF(@TreatmentAssignmentDataSource == "metaosflight")
+ 
+            #DECLARE flightsSeparated ARRAY<string>;
+            #IF(@Flights.Contains(":")) // to avoid alias duplicates
+                #SET flightsSeparated = new ARRAY<string>((from s in @Flights.Split('|') where s.Contains(":") select s.ToUpperInvariant()));
+            #ELSE
+                //#SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select String.Format("{0}", s).ToUpper());
+                #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select s.ToUpperInvariant());
+            #ENDIF
+ 
+            #DECLARE StartDateStr string = DateTime.Parse(@StartDate).ToString("yyyy-MM-dd");
+            #DECLARE EndDateStr string = DateTime.Parse(@EndDate).ToString("yyyy-MM-dd");
+            #DECLARE Start DateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateStr + "T00:00:00Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+            #DECLARE End DateTime = DateTime.SpecifyKind(DateTime.Parse(@EndDateStr + "T23:59:59Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+           
+            #DECLARE CopilotUsageViewPath string = "/shares/exchange.storage.prod/local/MSAI/CopilotUsage/View/CopilotUsageView.view";
+            #IF(@Region == "EU")
+                #SET CopilotUsageViewPath = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/CopilotUsage/View/CopilotUsageView.view";
+            #ENDIF
+
+            CopilotUsageView =
+            VIEW @CopilotUsageViewPath
+            PARAMS (StartDateTime = @Start,
+                EndDateTime = @End
+            #IF(@Region == "EU")
+                ,IsEuropeRegion = true
+            #ENDIF
+               );
+ 
+            metaOSFlights =
+            SELECT
+                UserIdPUID,
+                Flights.ClientFlights.ToUpperInvariant() AS Flights,
+                RequestTime AS EventInfo_Time
+            FROM CopilotUsageView
+            WHERE !string.IsNullOrEmpty(UserIdPUID) AND !string.IsNullOrEmpty(Flights.ClientFlights)
+            AND RequestTime.HasValue;
+ 
+            metaOSFlights =
+                SELECT
+                    UserIdPUID,
+                    Flight,
+                    EventInfo_Time
+                FROM metaOSFlights CROSS APPLY Flights.ToUpper().Split(',') AS Flight;
+ 
+            metaOSFlights =
+                SELECT
+                    UserIdPUID AS ExperimentalUnitId,
+                    Flight,
+                    EventInfo_Time
+                FROM metaOSFlights
+                WHERE (@flightsSeparated.Contains(Flight));
+ 
+            metaOSFlights =
+                SELECT
+                    ExperimentalUnitId,
+                    Flight,
+                    MIN(EventInfo_Time) AS Timestamp
+                FROM metaOSFlights
+                GROUP BY ExperimentalUnitId,
+                        Flight;
+ 
+            // Filter out users with >1 flight config in the date range
+            metaOSFlights_Cnts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM metaOSFlights
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+ 
+            metaOSFlights =
+                SELECT ta.*
+                FROM metaOSFlights AS ta
+                LEFT SEMIJOIN metaOSFlights_Cnts AS tb
+                ON ta.ExperimentalUnitId == tb.ExperimentalUnitId;
+ 
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    metaOSFlights.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN metaOSFlights
+                ON
+                dataSetToFilterFlight.UserId == metaOSFlights.ExperimentalUnitId;
+        #ELSEIF(@TreatmentAssignmentDataSource == "3sflight") // 3sflight temp change to use copilot usage dataset, when server data not ready
+         
+            #DECLARE flightsSeparated ARRAY<string>;
+            #IF(@Flights.Contains(":")) // to avoid alias duplicates
+                #SET flightsSeparated = new ARRAY<string>((from s in @Flights.Split('|') where s.Contains(":") select s.ToUpperInvariant()));
+            #ELSE
+                //#SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select String.Format("{0}", s).ToUpper());
+                #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split('|') select s.ToUpperInvariant());
+            #ENDIF
+ 
+            #DECLARE StartDateStr string = DateTime.Parse(@StartDate).ToString("yyyy-MM-dd");
+            #DECLARE EndDateStr string = DateTime.Parse(@EndDate).ToString("yyyy-MM-dd");
+            #DECLARE Start DateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateStr + "T00:00:00Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+            #DECLARE End DateTime = DateTime.SpecifyKind(DateTime.Parse(@EndDateStr + "T23:59:59Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+           
+            CopilotUsageView =
+            VIEW @"/shares/exchange.storage.prod/local/MSAI/CopilotUsage/View/CopilotUsageView.view"
+            PARAMS (StartDateTime = @Start, EndDateTime = @End);
+ 
+            sssFlights =  
+            SELECT
+                UserIdPUID,
+                Flights.SSSFlights.ToUpperInvariant() AS Flights,
+                RequestTime AS EventInfo_Time
+            FROM CopilotUsageView
+            WHERE !string.IsNullOrEmpty(UserIdPUID) AND !string.IsNullOrEmpty(Flights.SSSFlights)
+            AND RequestTime.HasValue;
+ 
+            sssFlights =
+                SELECT
+                    UserIdPUID,
+                    Flight,
+                    EventInfo_Time
+                FROM sssFlights CROSS APPLY Flights.ToUpper().Split(',') AS Flight;
+ 
+            sssFlights =
+                SELECT
+                    UserIdPUID AS ExperimentalUnitId,
+                    Flight,
+                    EventInfo_Time
+                FROM sssFlights
+                WHERE (@flightsSeparated.Contains(Flight));
+ 
+            sssFlights =
+                SELECT
+                    ExperimentalUnitId,
+                    Flight,
+                    MIN(EventInfo_Time) AS Timestamp
+                FROM sssFlights
+                GROUP BY ExperimentalUnitId,
+                        Flight;
+ 
+            // Filter out users with >1 flight config in the date range
+            sssFlights_Cnts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM sssFlights
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+ 
+            sssFlights =
+                SELECT ta.*
+                FROM sssFlights AS ta
+                LEFT SEMIJOIN sssFlights_Cnts AS tb
+                ON ta.ExperimentalUnitId == tb.ExperimentalUnitId;
+ 
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+                SELECT
+                    dataSetToFilterFlight.*,
+                    sssFlights.Flight
+                FROM dataSetToFilterFlight
+                INNER BROADCASTRIGHT JOIN sssFlights
+                ON
+                dataSetToFilterFlight.UserId == sssFlights.ExperimentalUnitId;
+         #ELSE
+
+            [PARTITION = (PARTITIONCOUNT = 2500, REQUIRED = true)]
+            dataSetToFilterFlight =
+            EXO_ScorecardUtils.QoSFlightableTraffic
+            (
+                Filter = treatmentAssignment,
+                Events = dataSetToFilterFlight,
+                ExperimentalUnitIdName = "UserId",
+                TimestampName = "RequestDateTimeInUTC"
+            );
+        #ENDIF
+
+        data =
+            SELECT
+                // Selecting all columns except Flight from original dataset
+                data.*.Except(Flight),
+                dataSetToFilterFlight.Flight
+            FROM data BROADCASTRIGHT JOIN dataSetToFilterFlight ON data.UserId == dataSetToFilterFlight.UserId AND data.ClientSessionId == dataSetToFilterFlight.ClientSessionId;
+    #ENDIF
+
+    #IF(@RemoveSingleSuggestionSessions)
+        // Calculate the cases where the user didn't perform any interaction with the session
+        // i.e. those session where the session got initiated by just clicking on the search box.
+        // Complete analysis can be found here
+        // https://microsoft.sharepoint.com/:w:/t/SQIMetrics225/EXjVgUNqBJFAtngJtSLTkHMBaUw8_OiDHMuv5S-UE816UQ?e=ODWA9L
+        sessionids_with_total_abandonment =
+            SELECT ClientSessionId AS AbandonedSessionId,
+            UserId,
+            COUNTIF(RouteName=="suggestions") AS SuggestionsRequestCount,
+            COUNTIF(RouteName=="suggestions" AND QueryLength == 0) AS EmptySuggestionsRequestCount,
+            COUNTIF(RouteName=="query") AS QueryRequestCount,
+            COUNTIF(ResponseActions != null && ResponseActions.Actions != null && ResponseActions.Actions.Where(x => x.EventType.ToLower() != @SessionEnd).Count() > 0) AS RequestCountWithUserActions
+        FROM data
+        HAVING EmptySuggestionsRequestCount == 1 AND SuggestionsRequestCount == 1 AND QueryRequestCount == 0 AND RequestCountWithUserActions == 0;
+        data = SELECT A.*
+              FROM data AS A
+              LEFT BROADCASTRIGHT ANTISEMIJOIN sessionids_with_total_abandonment AS B
+              ON A.UserId == B.UserId AND A.ClientSessionId == B.AbandonedSessionId;
+    #ENDIF
+
+    #DECLARE languageStreamPrefix string = @"/shares/exchange.storage.prod/local/Aggregated/Datasets/Public/SSS/daily/";
+    #DECLARE languageStreamPattern string = @"%Y/%m/%d/AutoSuggest.IndexGen.UserMailboxLanguage.%Y_%m_%d.ss";
+    #DECLARE languageStreamFormat string = @languageStreamPrefix + "{0:yyyy}/{0:MM}/{0:dd}/AutoSuggest.IndexGen.UserMailboxLanguage.{0:yyyy}_{0:MM}_{0:dd}.ss";
+    #DECLARE LanguageStreamsExist bool = Enumerable
+                                         .Range(0, int.MaxValue)
+                                         .Select(index => new DateTime?(DateTime.Parse(@StartDate).AddDays(index)))
+                                         .TakeWhile(date => date <= DateTime.Parse(@EndDate))
+                                         .Select(date => string.Format(@languageStreamFormat, date))
+                                         .All(s => EXISTS(s));
+
+    #IF(@LanguageStreamsExist)
+        // Allow sparse streams here i.e. all but one language stream may be missing
+        userLanguage =
+            SELECT UserId,
+                   TimestampUTC,
+                   DominantLanguage FROM
+                   (SSTREAM SPARSE STREAMSET @languageStreamPrefix
+                       PATTERN @languageStreamPattern
+                       RANGE __date = [@StartDate, @EndDate]);
+
+        // For language stream - for each user there could be many entries
+        // Consider the latest non-empty language entry for scorecard purposes
+        userLanguage =
+            SELECT *,
+                   ROW_NUMBER() OVER(PARTITION BY UserId ORDER BY TimestampUTC DESC) AS _rank
+            FROM userLanguage
+            HAVING _rank == 1;
+
+        userLanguage =
+            SELECT DominantLanguage,
+                   UserId.ToLowerInvariant() AS LowerCasedUserId
+            FROM userLanguage;
+
+        data = SELECT *, UserId.ToLowerInvariant() AS LowerCasedUserId FROM data;
+
+        // Joining the user language mapping stream with the input data stream
+        [PARTITION(LowerCasedUserId)=(PARTITIONCOUNT=2000)]
+        data =
+            SELECT A.*,
+                   IF(string.IsNullOrWhiteSpace(B.DominantLanguage), "unknown", B.DominantLanguage) AS Market
+            FROM data AS A
+                 LEFT OUTER BROADCASTRIGHT JOIN
+                     userLanguage AS B
+                 ON A.LowerCasedUserId == B.LowerCasedUserId;
+    #ELSE
+        data = SELECT *, "unknown" AS Market FROM data;
+    #ENDIF
+
+    // We add a new column which determines the first index of the period in the EntryPoint column.
+    // This is used to parse the EntryPoint column into Partner and Scenario filters, which are required for Seedfinder and RetroAA.
+    data =
+        SELECT *,
+               EntryPoint.IndexOf('.') AS SplitIndex
+        FROM data;
+
+    [ROWCOUNT=1000000000000] //edit
+    data =
+        SELECT RandomizationId,
+               IF(@NoFlightFilter, ExternalDirectoryObjectId, UserId) AS UserId,
+               UserId AS PassportUserId,
+               TenantId,
+               UserType,
+               ClientSessionId,
+               ConversationId,
+               ImpressionId,
+               EntryPoint,
+               Ring,
+               RouteName,
+               Flight,
+               RequestDateTimeInUTC,
+               RequestDate,
+               HardwareSkuType,
+               Market,
+               RenderedGroupNameToGroupInfoMap,
+               TriggerConditions,
+               Is3SRequest,
+               IsLastRequestInLogicalImpression,
+               Vertical,
+               NormalizedLogicalId,
+               E2EHttpStatus,
+               E2ETotalLatency,
+               CafeHttpStatus,
+               CafeTotalLatency,
+               GwsHttpStatus,
+               GwsTotalLatency,
+               LogicalImpressionIsRendered,
+               LogicalImpressionE2ELatency,
+               ResultsRendered,
+               QueryCategory,
+               ImpressionE2ERenderingLatency,
+               IsRendered,
+               ProviderNameStatusMap,
+               ProviderNameLatencyMap,
+               (SplitIndex == -1) ?
+               "usertype="+UserType+";deployring="+Ring+";partner="+EntryPoint+";scenario=" :
+               "usertype="+UserType+";deployring="+Ring+";partner="+EntryPoint.Substring(0, SplitIndex)+";scenario="+EntryPoint.Substring(SplitIndex+1)
+               AS FilterMap,
+               QueryLength,
+               QueryOffset,
+               ImpressionGuidToDataSourceMap,
+               LogicalRenderedContent,
+               ResponseActions,
+               InputInformation,
+               FlightId AS FlightInfo,
+               IsS500,
+               UserAgent,
+               ClientVersion,
+               SearchPlatform,
+               RenderedContent,
+               Page,
+               Scopes,
+               AdditionalInfoString,
+               AppInfo,
+               IsEU
+        FROM data;
+
+#IF(@EnableLivDebug)
+/*
+ * COMPUTING LastValidSuggestionsImpressionInConversation FOR DEBUGGING SCORECARD
+ * CODE IS OPTIMISED OUT FOR PRODUCTION QoS SCORECARD
+*/
+    [ROWCOUNT=1000000000000] //edit
+    nonqf_data =
+        SELECT *,
+               false AS LastValidSuggestionsImpressionInConversation
+        FROM data
+        WHERE RouteName != "suggestions";
+
+    qf_data =
+        SELECT
+            *,
+            Utility.IsQfEventSeen(ResponseActions) ? 1 : 0 AS QFEventSeen
+        FROM data
+        WHERE RouteName == "suggestions";
+
+    [ROWCOUNT=1000000000000] //edit
+    qf_data =
+        SELECT
+            *,
+            SUM(QFEventSeen) OVER (PARTITION BY RequestDate, EntryPoint, ConversationId ORDER BY RequestDateTimeInUTC.Ticks ASC, QueryLength ASC, ImpressionId ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS QFCumulativeEvents
+        FROM qf_data;
+
+    qf_data =
+        SELECT
+            *,
+            IF((QFEventSeen == 0 AND QFCumulativeEvents == 0) OR (QFEventSeen == 1 AND QFCumulativeEvents == 1), true, false) AS IsValidImpressionForConversation
+        FROM qf_data;
+
+    [ROWCOUNT=1000000000000] //edit
+    qf_data_invalid =
+        SELECT
+            *,
+            false AS LastValidSuggestionsImpressionInConversation
+        FROM qf_data
+        WHERE NOT IsValidImpressionForConversation;
+
+    qf_data_valid =
+        SELECT *,
+            ROW_NUMBER() OVER(PARTITION BY ConversationId ORDER BY RequestDateTimeInUTC.Ticks DESC, QueryLength DESC, ImpressionId DESC) == 1 AS LastValidSuggestionsImpressionInConversation
+        FROM qf_data
+        WHERE IsValidImpressionForConversation;
+
+    data =
+        SELECT *.Except(QFEventSeen, QFCumulativeEvents, IsValidImpressionForConversation)
+        FROM qf_data_valid
+        UNION ALL
+        SELECT *.Except(QFEventSeen, QFCumulativeEvents, IsValidImpressionForConversation)
+        FROM qf_data_invalid
+        UNION ALL
+        SELECT *
+        FROM nonqf_data;
+#ELSE
+     data =
+        SELECT *,
+               false AS LastValidSuggestionsImpressionInConversation
+        FROM data;
+#ENDIF
+
+    data =
+        SELECT RandomizationId,
+               UserId,
+               PassportUserId,
+               TenantId,
+               UserType,
+               ClientSessionId,
+               ConversationId,
+               ImpressionId,
+               EntryPoint,
+               Ring,
+               RouteName,
+               Flight,
+               RequestDateTimeInUTC,
+               RequestDate,
+               HardwareSkuType,
+               Market,
+               RenderedGroupNameToGroupInfoMap,
+               TriggerConditions,
+               Is3SRequest,
+               IsLastRequestInLogicalImpression,
+               Vertical,
+               NormalizedLogicalId,
+               E2EHttpStatus,
+               E2ETotalLatency,
+               CafeHttpStatus,
+               CafeTotalLatency,
+               GwsHttpStatus,
+               GwsTotalLatency,
+               LogicalImpressionIsRendered,
+               LogicalImpressionE2ELatency,
+               ResultsRendered,
+               QueryCategory,
+               ImpressionE2ERenderingLatency,
+               IsRendered,
+               ProviderNameStatusMap,
+               ProviderNameLatencyMap,
+               FilterMap,
+               QueryLength,
+               QueryOffset,
+               ImpressionGuidToDataSourceMap,
+               LogicalRenderedContent,
+               ResponseActions,
+               LastValidSuggestionsImpressionInConversation,
+               InputInformation,
+               FlightInfo,
+               IsS500,
+               UserAgent,
+               ClientVersion,
+               SearchPlatform,
+               RenderedContent,
+               Page,
+               Scopes,
+               AdditionalInfoString,
+               AppInfo,
+               IsEU
+        FROM data;
+
+END;

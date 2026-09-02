@@ -1,0 +1,948 @@
+ /* ---------------------------------------------------------------------------------------------------
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    Author: debas
+    Description: Prepares the substrate search input data by using the ODINImpression view.
+    Data source: SQI_SubstrateSearch_RawLogs view.
+
+------------------------------------------------------------------------------------------------------ */
+
+CREATE VIEW SQI_SubstrateSearch_RawLogs
+SCHEMA  
+(
+            RandomizationId : string,
+            UserId : string,
+            TenantId : string,
+            ExternalDirectoryObjectId : string,
+            UserType : string,
+            RequestDate : string,
+            RequestDateTimeInUTC : DateTime,
+            RequestDateTimeInUtcTicks : long,
+            EntryPoint : string,
+            RouteName : string,
+            NormalizedConversationId : string,
+            NormalizedImpressionGuid : string,
+            ClientSessionId : string,
+            ServerSessionId : string,
+            QueryLength : ushort,
+            Ring : string,
+            HttpStatus : string,
+            ServerLatency : uint?,
+            CafeHttpStatus : string,
+            CafeTotalLatency : double,
+            ClientPerceivedHttpStatus : string,
+            E2ELatency : uint?,
+            EventsList : string,
+            DataSourceMap : Microsoft.DataMining.Office.DataTypes.DataSource,
+            RenderedGroupNameToGroupInfoMap: System.Collections.Generic.Dictionary<string, Microsoft.DataMining.Office.DataTypes.Success.GroupInfo>,
+            RenderedContent : Microsoft.DataMining.Office.DataTypes.Content,
+            ResponseActions : Microsoft.DataMining.Office.DataTypes.ResponseActionList,
+            RequestContextInformation : string,
+            QueryInformation : string,
+            HardwareSkuType : string,
+            QueryOffset : string,
+            TriggerConditions : string,
+            Flight : string,
+            LogicalImpressionIsRendered : bool?,
+            LogicalImpressionE2ELatency : uint?,
+            ResultsRendered : Microsoft.DataMining.Office.DataTypes.ResultsRendered,
+            NormalizedLogicalId : string,
+            Is3SRequest : bool,
+            IsLastRequestInLogicalImpression: bool,
+            Vertical: Microsoft.DataMining.Office.DataTypes.Vertical,
+            InputInformation : Microsoft.DataMining.Office.DataTypes.InputInformation,
+            QueryCategory : string,
+            ImpressionE2ERenderingLatency : uint?,
+            IsRendered: bool, // Request level rendering information from the V1 instrumentation contract
+            ImpressionGuidToDataSourceMap: Microsoft.DataMining.Office.DataTypes.LogicalDataSource,
+            LogicalRenderedContent: Microsoft.DataMining.Office.DataTypes.ResultViewContainerList,
+            IsS500: bool,
+            SearchPlatform: string,
+            UserAgent: string,
+            ClientVersion: string,
+            FlightId : string,
+            Page : uint?,
+            ProviderNameStatusMap : System.Collections.Generic.Dictionary<string,string>,
+            ProviderNameLatencyMap : System.Collections.Generic.Dictionary<string,double>,
+            Scopes : string,
+            AppInfo : Microsoft.DataMining.Office.DataTypes.AppInfo,
+            IsEU : bool?
+)
+PARAMS
+(
+    StartDate string,
+    EndDate string,
+    TreatmentAssignmentDataSource string DEFAULT = "sss",
+    Flights string,
+    FlightsSeparator char DEFAULT = '|',
+    FilterNonEmailTraffic bool DEFAULT = true,
+    RemoveBotTraffic bool DEFAULT = true,
+    EntryPoints string DEFAULT = "", // optionally allow us to filter to selected entrypoints (semicolon separated).
+    LogicalEntryPointsForUsingComputedCVID string DEFAULT = "", // e.g. "exchangeshared.outlookmobile.android.email;exchangeshared.outlookmobile.ios.email"
+    Rings string DEFAULT = "", // optionally allow us to filter to selected rings (semicolon separated).
+    RequestCountThresholdForBotUsers int DEFAULT = 2000,
+    RequestCountThresholdForTestConversations int DEFAULT = 100,
+    UsePUIDForConsumerData bool DEFAULT = true,
+    UseSampleData bool DEFAULT = false,
+    DailyWithHourlyFallback bool DEFAULT = true,
+    RemoveSingleSuggestionSessions bool DEFAULT = true,
+    LimitSearchRequestsToEmailSearch bool DEFAULT = true,
+    FlightFilteringAtSessionLevel bool DEFAULT = false,
+    FilterDevicesWithMultiplePuids bool DEFAULT = true, // Hook to filter devices with multiple puids (used for olo_puid)
+    ThresholdForFilteringDevicesWithMultiplePuids int DEFAULT = 1, // Threshold count to determine which devices to filter (used for olo_puid)
+    FilterPuidsWithMultipleDevices bool DEFAULT = true, // Hook to filter puids with multiple devices (used for olo_puid)
+    Workload string DEFAULT = "Outlook",
+    CustomInput string DEFAULT = "shares/exchange.storage.prod/local",
+    NoFlightFilter bool DEFAULT = false, // Do not filter for flights.
+    LocalRunViaE2EValidationTool bool DEFAULT = false,
+    FlightAppId string DEFAULT = "Search", // Filtering the OdinVariantConfigV2 flight stream using FlightAppId. Cerberus flights == "Search", FlightTrain == "EXO"
+    MismatchPatchEnabled bool DEFAULT = false,
+    Region string DEFAULT = "ROW",  // "ROW" or "EU"
+    EUCutOffEnable bool DEFAULT = false,
+    UseCafe bool DEFAULT = false
+)
+AS
+BEGIN
+    #DECLARE DependencyPreffix string = "/shares/exchange.storage.prod";
+    #DECLARE Scorecard_TreatmentAssignmentViewPath string = "/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/Scorecard_TreatmentAssignment.view";
+    #IF(@Region == "EU")
+        #SET Scorecard_TreatmentAssignmentViewPath = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/Scorecard_TreatmentAssignment.view";
+        #SET DependencyPreffix = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net";
+
+        // Short-term fix for ICM 788450698: under metaosflight, load ScorecardUtils variant whose Newtonsoft.Json.dll matches CopilotUsageView's CopilotDataFusionViewV2 path to avoid assembly conflicts.
+        #IF(@TreatmentAssignmentDataSource == "metaosflight")
+            MODULE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_CopilotUsage_EU.module";
+        #ELSE
+            MODULE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_EU.module";
+        #ENDIF
+
+    #ELSE
+        #IF(@TreatmentAssignmentDataSource == "metaosflight")
+            MODULE @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils_CopilotUsage.module";
+        #ELSE
+            MODULE @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/MetricSet/EXO_ScorecardUtils.module";
+        #ENDIF
+    #ENDIF
+    
+    #DECLARE LogicalImpressionViewPath string = @DependencyPreffix + @"/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpression.view";
+    #IF(@TreatmentAssignmentDataSource == "metaosflight")
+        #SET LogicalImpressionViewPath = @DependencyPreffix + @"/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpression_CopilotUsage.view";
+    #ENDIF
+    
+    REFERENCE @DependencyPreffix + @"/local/MSAI/SSS/SearchImpression/Dependencies/Microsoft.SubstrateSearch.InstrumentationSchemas.dll";
+    REFERENCE @DependencyPreffix + @"/local/Aggregated/Datasets/Public/SSS/binaries/netstandard.dll";
+    
+    USING Microsoft.DataMining.Office.DataTypes;
+    USING Microsoft.DataMining.Office.DataTypes.Success;
+    USING ScorecardUtility;
+    USING ScorecardUtility.Reducers;
+    USING ScorecardUtility.Tools;
+
+    USING DataMining.Fundamental;
+    USING DataMining.Fundamental.Processors;
+    USING Microsoft.SubstrateSearch.Instrumentation.Common;
+    USING System.Linq;
+    USING System.Collections.Generic;
+
+    // Argument checks
+    #IF (string.IsNullOrEmpty(@StartDate))
+        #SET StartDate = DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd");
+    #ENDIF    
+    #IF (string.IsNullOrEmpty(@EndDate))
+        #SET EndDate = @StartDate;
+    #ENDIF
+
+    #DECLARE LogicalEntryPointsListForUsingComputedCVID ARRAY<string>;
+    #DECLARE RingsList ARRAY<string>;
+    #SET LogicalEntryPointsListForUsingComputedCVID = new ARRAY<string> (@LogicalEntryPointsForUsingComputedCVID.ToLowerInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+    #SET RingsList = new ARRAY<string>(@Rings.ToUpperInvariant().Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+
+    #DECLARE FlightList string;
+    #IF (@FlightsSeparator == ',' || @FlightsSeparator == '|')
+        #SET FlightList = @Flights.ToUpper();
+    #ELSE
+        #SET FlightList = String.Join(",", @Flights.Split(@FlightsSeparator).ToUpper());
+    #ENDIF
+
+    // TEMP Fix for metaosflight:
+    #IF ((@TreatmentAssignmentDataSource == "metaosflight") OR (@TreatmentAssignmentDataSource == "3sflight"))
+        #SET @NoFlightFilter=true;
+        #SET @FlightFilteringAtSessionLevel=false;
+    #ENDIF
+
+    #DECLARE ReadWithoutSpecifingFlight bool = @NoFlightFilter || @TreatmentAssignmentDataSource != "odinvariantconfigv2" || (@FlightFilteringAtSessionLevel AND @TreatmentAssignmentDataSource == "odinvariantconfigv2");
+
+    // Query LogicalImpressionView with input entrypoints directly
+    logicalImpressionData =
+        #IF(NOT @LocalRunViaE2EValidationTool)
+        VIEW @LogicalImpressionViewPath
+        #ELSE
+        VIEW @"../LogicalImpression/LogicalImpression.view"
+        #ENDIF
+        PARAMS
+        (
+            StartDate=@StartDate,
+            EndDate=@EndDate,
+            #IF (!@ReadWithoutSpecifingFlight)
+                FlightList = @FlightList,
+                FlightAppId = @FlightAppId,
+            #ENDIF
+            UseSampleData = @UseSampleData,
+            EntryPoints = @EntryPoints,
+            IsEnableBond = false,
+            CustomInput = @CustomInput,
+            EUCutOffEnable = @EUCutOffEnable
+        );
+
+    // Filtering the data based on the input ring filters (no entrypoint filtering needed since passed to LogicalImpressionView)
+    #IF(!string.IsNullOrEmpty(@Rings))
+        logicalImpressionData = SELECT * FROM logicalImpressionData WHERE @RingsList.Contains(DeployRing);
+    #ENDIF
+
+    logicalImpressionData =
+        SELECT
+            UserId,
+            TenantId,
+            AppEntryPoint,
+            ExternalDirectoryObjectId,
+            IF(@LogicalEntryPointsListForUsingComputedCVID.Contains(AppEntryPoint), ComputedConversationId, NormalizedConversationId) AS NormalizedConversationId,
+            RequestDate,
+            ServerSessionId,
+            ExtendedProperties,
+            ImpressionGuidToCafeInfo,
+            RouteName,
+            RequestTime,
+            ImpressionGuidToServerLatency,
+            ImpressionGuidToHttpStatus,
+            ClientSessionId,
+            DeployRing,
+            ImpressionGuidToClientPerceivedHttpStatus,
+            ImpressionGuidToClientPerceivedLatency,
+            ImpressionGuidToDataSourceMap,
+            ImpressionGuidToRouteName,
+            ResponseActions,
+            QueryLength,
+            ImpressionGuidToQueryInformation,
+            FlightInfo,
+            UserContext,
+            EnvironmentContext,
+            UserType,
+            HardwareSkuType,
+            ImpressionGuidToQueryOffset,
+            TriggerConditions,
+            VariantConfigFlights,
+            IF(RenderedContent == null, (Dictionary<string, GroupInfo>)null, Utility.ExtractRenderedGroupNameToGroupInfoMap(RenderedContent.ResultViewContainers)) AS RenderedGroupNameToGroupInfoMap,
+            (Content)null AS RenderedContent,
+            NormalizedLogicalId,
+            LogicalImpressionIsRendered,
+            LogicalImpressionE2ELatency,
+            ResultsRendered,
+            Vertical,
+            InputInformation,
+            ImpressionGuidToQueryCategory,
+            ImpressionGuidToE2ELatency,
+            IsS500 ?? false AS IsS500,
+            UserAgent,
+            ClientVersion,
+            Page,
+            false AS IsRendered,
+            ImpressionGuidToDataSourceMap AS LogicalDataSource,
+            RenderedContent AS LogicalRenderedContent,
+            ImpressionGuidToRequestContextInformation,
+            AppInfo,
+            IsEU
+        FROM
+            logicalImpressionData;
+
+    logicalImpressionData =
+        PROCESS logicalImpressionData
+        USING ExtractRequestsFromLogicalImpressionProcessor()
+        PRODUCE
+            UserId,
+            TenantId,
+            AppEntryPoint,
+            ExternalDirectoryObjectId,
+            NormalizedConversationId,
+            RequestDate,
+            ServerSessionId,
+            ExtendedProperties,
+            CafeInfo,
+            RouteName,
+            RequestTime,
+            ServerLatency,
+            HttpStatus,
+            ClientSessionId,
+            DeployRing,
+            ClientPerceivedHttpStatus,
+            ClientPerceivedLatency,
+            DataSourceMap,
+            RenderedGroupNameToGroupInfoMap,
+            RenderedContent,
+            ResponseActions,
+            QueryLength,
+            QueryInformation,
+            FlightInfo,
+            UserContext,
+            EnvironmentContext,
+            UserType,
+            HardwareSkuType,
+            QueryOffset,
+            TriggerConditions,
+            VariantConfigFlights,
+            NormalizedImpressionGuid,
+            NormalizedLogicalId,
+            Is3SRequest,
+            IsLastRequestInLogicalImpression,
+            Vertical,
+            LogicalImpressionIsRendered,
+            LogicalImpressionE2ELatency,
+            ResultsRendered,
+            InputInformation,
+            QueryCategory,
+            ImpressionE2ERenderingLatency,
+            IsS500,
+            UserAgent,
+            ClientVersion,
+            Page,
+            IsRendered,
+            LogicalDataSource,
+            LogicalRenderedContent,
+            RequestContextInformation,
+            AppInfo,
+            IsEU;
+
+    logicalImpressionData =
+        SELECT UserId,
+            TenantId,
+            NormalizedImpressionGuid AS ImpressionId,
+            AppEntryPoint AS EntryPoint,
+            ExternalDirectoryObjectId ?? string.Empty AS ExternalDirectoryObjectId,
+            NormalizedConversationId ?? string.Empty AS NormalizedConversationId,
+            NormalizedImpressionGuid,
+            RequestDate ?? string.Empty AS RequestDate,
+            IF(CafeInfo == null || !CafeInfo.TotalRequestTime.HasValue, (double)0, (double)CafeInfo.TotalRequestTime.Value) AS CafeTotalLatency,
+            IF(CafeInfo == null || string.IsNullOrWhiteSpace(CafeInfo.HttpStatus), string.Empty, CafeInfo.HttpStatus) AS CafeHttpStatus,
+            RouteName,
+            RequestTime.Value AS RequestDateTimeInUTC,
+            RequestTime.Value.Ticks AS RequestDateTimeInUtcTicks,
+            ServerLatency,
+            HttpStatus,
+            ClientSessionId.ToLowerInvariant() AS ClientSessionId,
+            DeployRing AS Ring,
+            ClientPerceivedHttpStatus,
+            ClientPerceivedLatency AS E2ELatency,
+            DataSourceMap,
+            RenderedGroupNameToGroupInfoMap,
+            RenderedContent,
+            ResponseActions,
+            IF(QueryLength == null || !QueryLength.HasValue, (ushort)0, QueryLength.Value) AS TempQueryLength,
+            ServerSessionId ?? string.Empty AS ServerSessionId,
+            string.Empty AS EventsList,
+            RequestContextInformation ?? string.Empty AS RequestContextInformation,
+            QueryInformation ?? string.Empty AS QueryInformation,
+            UserContext ?? string.Empty AS UserContext,
+            EnvironmentContext ?? string.Empty AS EnvironmentContext,
+            UserType?? string.Empty AS TempUserType,
+            HardwareSkuType?? string.Empty AS TempHardwareSkuType,
+            QueryOffset == null ? "0" : QueryOffset.ToString() AS QueryOffset,
+            TriggerConditions ?? string.Empty AS TriggerConditions,
+            FlightInfo AS FlightId,
+            VariantConfigFlights,
+            Is3SRequest,
+            IsLastRequestInLogicalImpression,
+            Vertical,
+            NormalizedLogicalId,
+            LogicalImpressionIsRendered,
+            LogicalImpressionE2ELatency,
+            ResultsRendered,
+            InputInformation,
+            QueryCategory,
+            ImpressionE2ERenderingLatency,
+            IsS500,
+            UserAgent,
+            ClientVersion,
+            Page,
+            IsEU,
+            IsRendered,
+            LogicalDataSource AS ImpressionGuidToDataSourceMap,
+            LogicalRenderedContent,
+            Utility.GetProviderNameStatusMap(DataSourceMap) AS ProviderNameStatusMap,
+            Utility.GetProviderNameLatencyMap(DataSourceMap) AS ProviderNameLatencyMap,
+            (LogicalRenderedContent != null && LogicalRenderedContent.MetaData != null && LogicalRenderedContent.MetaData.ContainsKey(Microsoft.DataMining.Office.DataTypes.MetaDataName.Scopes))  ? LogicalRenderedContent.MetaData[Microsoft.DataMining.Office.DataTypes.MetaDataName.Scopes] : "Unknown" AS Scopes,
+            AppInfo
+    FROM logicalImpressionData
+    WHERE NOT string.IsNullOrWhiteSpace(UserId)
+            AND (RouteName == "suggestions" OR RouteName == "query" OR RouteName == "recommendations")
+            AND RequestTime.HasValue
+    HAVING
+            NOT string.IsNullOrWhiteSpace(NormalizedImpressionGuid) AND NOT NormalizedImpressionGuid == "00000000000000000000000000000000"
+            AND NOT string.IsNullOrWhiteSpace(RequestDate);
+
+    // Filter out impressions with empty conversation ID, for recommendations traffic use the impression ID in place of conversation ID
+    logicalImpressionData =
+        SELECT
+            *.Replace(
+            IF(RouteName == "recommendations" && NormalizedConversationId==string.Empty, NormalizedImpressionGuid, NormalizedConversationId) AS NormalizedConversationId)
+        FROM
+            logicalImpressionData
+        HAVING
+            NOT string.IsNullOrWhiteSpace(NormalizedConversationId) AND NOT NormalizedConversationId == "00000000000000000000000000000000";
+
+    // Filter out requests from MSB Engagement feature which should not impact search metric and do not use Qos metric
+    logicalImpressionData =
+        SELECT
+            *
+        FROM
+            logicalImpressionData
+        WHERE DataSourceMap == null || DataSourceMap.ElementMap == null || !DataSourceMap.ElementMap.Keys.Any(provider => provider.StartsWith("MIPN_"));
+
+    // Use logicalImpressionData directly (no longer performing union with impressionData)
+    data = SELECT * FROM logicalImpressionData;
+
+    // Filtering data to known user types and add RandomizationId column
+    data = 
+        SELECT UserId AS RandomizationId,
+                *,
+                IF(string.IsNullOrEmpty(TempUserType), Utility.GetUserType(Utility.GetUserContextObject(UserContext)), TempUserType) AS UserType
+        FROM data
+        HAVING UserType == "Business" || UserType == "Consumer";
+   
+    #IF(!@NoFlightFilter AND !@FlightFilteringAtSessionLevel)
+        #IF(@TreatmentAssignmentDataSource == "qf" || @TreatmentAssignmentDataSource == "sss") // this path to be removed once MSAI switches to odinvariantconfigv2 fully
+            #DECLARE flightsSeparated ARRAY<string>;
+            #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split(@FlightsSeparator) select String.Format("{0}", s).ToUpper());
+
+            userFlightData =
+                SELECT
+                    UserType == "Business" ? "Commercial" : UserType AS Office365Category,
+                    UserId AS ExperimentalUnitId,
+                    FlightId.ToUpper() AS FlightId,
+                    RequestDateTimeInUTC AS Timestamp,
+                    "FAKE" AS OMSTenantId
+                FROM data
+                WHERE NOT String.IsNullOrEmpty(UserId) AND NOT String.IsNullOrEmpty(FlightId);
+
+            userFlightData =
+                SELECT
+                    Office365Category,
+                    ExperimentalUnitId,
+                    Flight,
+                    Timestamp,
+                    OMSTenantId
+                FROM userFlightData CROSS APPLY FlightId.Split(';') AS Flight;
+
+            treatmentAssignment =
+                SELECT
+                    Office365Category,
+                    ExperimentalUnitId,
+                    Flight,
+                    FIRST(OMSTenantId) AS OMSTenantId,
+                    MIN((DateTime?)Timestamp) AS Timestamp
+                FROM userFlightData
+                WHERE (@flightsSeparated.Contains(Flight));
+
+            // Filter out empty user Ids and users with >1 flight
+            treatmentAssignmentCounts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM treatmentAssignment
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+
+            treatmentAssignment =
+                SELECT ta.*
+                FROM treatmentAssignment AS ta
+                LEFT SEMIJOIN treatmentAssignmentCounts AS tac
+                ON ta.ExperimentalUnitId == tac.ExperimentalUnitId;
+
+            data =
+            EXO_ScorecardUtils.QoSFlightableTraffic
+            (
+                Filter = treatmentAssignment,
+                Events = data,
+                ExperimentalUnitIdName = "UserId",
+                TimestampName = "RequestDateTimeInUTC"
+            );
+
+        #ELSEIF (@TreatmentAssignmentDataSource == "odinvariantconfigv2")
+                data =
+                SELECT *,
+                        String.Join(",", VariantConfigFlights.Select(f => f.FlightName)) AS Flight
+                FROM data
+                WHERE VariantConfigFlights.Count == 1;
+
+        #ELSE //non odinvariantconfigv2/sss/qf data sources
+                treatmentAssignment = VIEW @Scorecard_TreatmentAssignmentViewPath
+                PARAMS
+                (
+                    StartDate = @StartDate,
+                    EndDate = @EndDate,
+                    TreatmentAssignmentDataSource = @TreatmentAssignmentDataSource,
+                    Flights = @Flights,
+                    FlightsSeparator = '|',
+                    FlightAppId = @FlightAppId,
+                    UsePUIDForConsumerData=@UsePUIDForConsumerData,
+                    MismatchPatchEnabled=@MismatchPatchEnabled,
+                    Region =  @Region
+                );
+
+                #IF(@TreatmentAssignmentDataSource == "outlookmobilesearch" || @TreatmentAssignmentDataSource == "outlookmacsearch")
+    
+                    // For outlook mobile and mac search - the TA source could have PUID's, EDOID's, PUID's in long etc.
+                    // This code block is normalizing the userIds.
+                    treatmentAssignment =
+                        SELECT Office365Category,
+                               Utility.ConvertToPuidForOutlookMobileMacAriaTenant(ExperimentalUnitId.ToUpperInvariant()) AS ExperimentalUnitId,
+                               Flight,
+                               OMSTenantId,
+                               Timestamp
+                        FROM treatmentAssignment
+                        HAVING
+                        NOT string.IsNullOrEmpty(ExperimentalUnitId);
+
+                    // For EDOID -> PUID conversion, it is using the 3S dataset to build the mapping for conversion.
+                    puidEdoIdMapping =
+                        SELECT DISTINCT UserId.ToUpperInvariant() AS UserId,
+                                        ExternalDirectoryObjectId.ToUpperInvariant() AS ExternalDirectoryObjectId
+                        FROM data;
+
+                    // INNER joining the TA source with the above mapping on both UserId and EDOID and then Unioning the 2 datasets to be treated as TASource
+                    treatmentAssignmentWithPuidJoin =
+                        SELECT Office365Category,
+                               UserId AS ExperimentalUnitId,
+                               Flight,
+                               OMSTenantId,
+                               Timestamp
+                        FROM treatmentAssignment
+                             INNER JOIN
+                                 puidEdoIdMapping
+                             ON ExperimentalUnitId == UserId;
+
+                    // Joining on EDOID and using the UserId as experimentalUnitId
+                    treatmentAssignmentWithEdoIdJoin =
+                        SELECT Office365Category,
+                               UserId AS ExperimentalUnitId,
+                               Flight,
+                               OMSTenantId,
+                               Timestamp
+                        FROM treatmentAssignment
+                             INNER JOIN
+                                 puidEdoIdMapping
+                             ON ExperimentalUnitId == ExternalDirectoryObjectId;
+
+                    treatmentAssignment =
+                        SELECT *
+                        FROM treatmentAssignmentWithPuidJoin
+                        UNION ALL
+                        SELECT *
+                        FROM treatmentAssignmentWithEdoIdJoin;
+
+                #ENDIF
+
+                #IF(@TreatmentAssignmentDataSource == "olo_puid" || @TreatmentAssignmentDataSource == "outlookdesktopsearch" || @TreatmentAssignmentDataSource == "outlookmobilesearch" || @TreatmentAssignmentDataSource == "outlookmacsearch")
+
+                    filteredUserIds =
+                        SELECT FIRST(Office365Category) AS DeviceId,
+                            COUNT(DISTINCT Office365Category) AS numDevices,
+                            ExperimentalUnitId AS UserId,
+                            Flight AS Flight
+                        FROM treatmentAssignment
+                        //remove users who used more than 1 device
+                        #IF (@FilterPuidsWithMultipleDevices)
+                        HAVING numDevices == 1
+                        #ENDIF
+                        ;
+
+                    #IF(@FilterDevicesWithMultiplePuids)
+                        // Filter out all the devices with multiple PUID's associated with them
+                        // Refer = https://microsoft.sharepoint.com/:w:/t/3SInstrumentation/ES696oi5pzZDjAB0LO93MKIBn4RSvSgbRYKtviNiwUJTjA?e=Uot1Uv
+                        filteredDeviceIds = 
+                            SELECT 
+                                Office365Category AS DeviceId, 
+                                COUNT(DISTINCT ExperimentalUnitId) AS PuidCount
+                                FROM treatmentAssignment
+                            HAVING
+                                PuidCount <= @ThresholdForFilteringDevicesWithMultiplePuids;
+
+                        filteredUserIds = 
+                            SELECT 
+                                A.* 
+                            FROM filteredUserIds AS A 
+                                INNER JOIN filteredDeviceIds AS B 
+                                    ON A.DeviceId == B.DeviceId;
+                    #ENDIF
+
+                    data =
+                        SELECT B.DeviceId AS RandomizationId,
+                            A.*.Except(RandomizationId)
+                        FROM data AS A
+                            LEFT OUTER BROADCASTRIGHT JOIN filteredUserIds AS B
+                            ON A.UserId == B.UserId
+                        HAVING RandomizationId != NULL;
+    
+                #ENDIF
+
+                #DECLARE ExperimentalUnitIdName string = "UserId";
+                #IF(@TreatmentAssignmentDataSource == "teamssearch")
+
+                    // For teams search - the randomization unit is EDOID
+                    // Using EDOID for filtering the dataset to the flighted users
+                    #SET ExperimentalUnitIdName = "ExternalDirectoryObjectIdUpperCased";
+
+                    data = 
+                        SELECT 
+                            *,
+                            ExternalDirectoryObjectId.ToUpperInvariant() AS ExternalDirectoryObjectIdUpperCased
+                        FROM 
+                            data 
+                        WHERE NOT string.IsNullOrEmpty(ExternalDirectoryObjectId);
+ 
+                #ENDIF
+
+                #IF(@TreatmentAssignmentDataSource == "assistanttvs")
+
+                    // For assistant search - the randomization unit is EDOID
+                    // Using EDOID for filtering the dataset to the flighted users
+                    #SET ExperimentalUnitIdName = "ExternalDirectoryObjectId";
+
+                    data = 
+                        SELECT 
+                            *
+                        FROM 
+                            data 
+                        WHERE NOT string.IsNullOrEmpty(ExternalDirectoryObjectId);
+ 
+                #ENDIF
+
+                // Discounting the impact of millseconds from user/request filtering for scorecard purposes
+                // It is possible that TASource and RequestStart timestamps differ in milliseconds (due to logging time discrepancies)
+                // Here this change is trying to discount this.
+                // Change is - 
+                //   Advancing the requesStarttTime to next second mark - by adding up milliseconds
+                //   Whereas moving back the flight assignment time stamp to the second mark by discounting the milliseconds.
+                //   This is to handle corner cases where requestStartTime second marker may be at previous one compared to the flight start time stamp
+                //   Flight start time stamp  = 2020-04-01T02:40:25.0090000Z, after change = 2020-04-01T02:40:25.0000000Z
+                //   Request start time stamp = 2020-04-01T02:40:24.9880781Z, after change = 2020-04-01T02:40:25.0000000Z
+                data = 
+                    SELECT 
+                        *,
+                        RequestDateTimeInUTC.AddMilliseconds(1000 - RequestDateTimeInUTC.Millisecond) AS RequestDateTimeInUtcForExperimentedUserFiltering
+                    FROM data;
+
+                treatmentAssignment = 
+                     SELECT 
+                         Office365Category,
+                         ExperimentalUnitId,
+                         Flight,
+                         OMSTenantId,
+                         (DateTime?)(Timestamp.Value.AddMilliseconds(-Timestamp.Value.Millisecond)) AS Timestamp
+                     FROM
+                         treatmentAssignment
+                     WHERE
+                         Timestamp.HasValue;
+
+                // Do not filter user-flights based on session start time for fastsearch(ecsconfig)
+                #IF(@TreatmentAssignmentDataSource == "fastsearch")
+                    // Office365Category is one of the following: "TeamSiteSearch", "CommSiteSearch", "MSW", "HubSiteSearch", "SPHomeWeb", "SharePointShared", "officehome"
+                    treatmentAssignment =
+                        SELECT
+                            IF (Office365Category == "TeamSiteSearch", "sharepointshared.teamsitesearch", IF (Office365Category == "CommSiteSearch", "sharepointshared.commsitesearch", IF (Office365Category == "MSW", "sharepointshared.msw", IF (Office365Category == "HubSiteSearch", "sharepointshared.hubsitesearch", IF (Office365Category == "SPHomeWeb", "sharepointshared.sphomeweb", IF (Office365Category == "officehome", "officecom.officehome", string.Empty)))))) AS EntryPoint,
+                            ExperimentalUnitId,
+                            Flight,
+                            OMSTenantId,
+                            Timestamp
+                        FROM treatmentAssignment;
+
+                    data =
+                        SELECT
+                            data.*,
+                            treatmentAssignment.Flight
+                        FROM data
+                        INNER BROADCASTRIGHT JOIN treatmentAssignment
+                        ON data.EntryPoint == treatmentAssignment.EntryPoint AND data.UserId == treatmentAssignment.ExperimentalUnitId;
+                #ELSEIF(@TreatmentAssignmentDataSource == "msbsearch" OR @TreatmentAssignmentDataSource == "edgesearch")
+
+                    data =
+                        SELECT
+                            data.*,
+                            treatmentAssignment.Flight
+                        FROM data
+                        INNER BROADCASTRIGHT JOIN treatmentAssignment
+                        ON data.EntryPoint == treatmentAssignment.Office365Category AND data.UserId == treatmentAssignment.ExperimentalUnitId;
+                #ELSE
+
+                    data =
+                    EXO_ScorecardUtils.QoSFlightableTraffic
+                    (
+                        Filter = treatmentAssignment,
+                        Events = data,
+                        ExperimentalUnitIdName = @ExperimentalUnitIdName,
+                        TimestampName = "RequestDateTimeInUtcForExperimentedUserFiltering"
+                    );
+                #ENDIF
+        #ENDIF
+    // Additional condition added here to prevent RetroAA jobs from taking this path.
+    #ELSEIF (@FlightFilteringAtSessionLevel AND !@NoFlightFilter)
+        #IF(@TreatmentAssignmentDataSource == "sss")
+            #DECLARE flightsSeparated ARRAY<string>;
+            #SET flightsSeparated = new ARRAY<string> (from s in @Flights.Split(@FlightsSeparator) select String.Format("{0}", s).ToUpper());
+
+            userFlightData =
+                SELECT
+                    UserType == "Business" ? "Commercial" : UserType AS Office365Category,
+                    UserId AS ExperimentalUnitId,
+                    FlightId.ToUpper() AS FlightId,
+                    RequestDateTimeInUTC AS Timestamp,
+                    "FAKE" AS OMSTenantId
+                FROM data
+                WHERE NOT String.IsNullOrEmpty(UserId) AND NOT String.IsNullOrEmpty(FlightId);
+
+            userFlightData =
+                SELECT
+                    Office365Category,
+                    ExperimentalUnitId,
+                    Flight,
+                    Timestamp,
+                    OMSTenantId
+                FROM userFlightData CROSS APPLY FlightId.Split(';') AS Flight;
+
+            treatmentAssignment =
+                SELECT
+                    Office365Category,
+                    ExperimentalUnitId,
+                    Flight,
+                    FIRST(OMSTenantId) AS OMSTenantId,
+                    MIN((DateTime?)Timestamp) AS Timestamp
+                FROM userFlightData
+                WHERE (@flightsSeparated.Contains(Flight));
+
+            // Filter out empty user Ids and users with >1 flight
+            treatmentAssignmentCounts =
+                SELECT ExperimentalUnitId,
+                    COUNT(DISTINCT Flight) AS NumFlights
+                FROM treatmentAssignment
+                WHERE (NOT String.IsNullOrEmpty(ExperimentalUnitId))
+                HAVING NumFlights == 1;
+
+            usersOnFlight =
+                SELECT ta.*
+                FROM treatmentAssignment AS ta
+                LEFT SEMIJOIN treatmentAssignmentCounts AS tac
+                ON ta.ExperimentalUnitId == tac.ExperimentalUnitId;
+        #ELSE
+            // First reduce dataset to users who are on the flight because computing ServerSessionId would otherwise be costly.
+            usersOnFlight = VIEW @Scorecard_TreatmentAssignmentViewPath
+                    PARAMS
+                    (
+                        StartDate = @StartDate,
+                        EndDate = @EndDate,
+                        TreatmentAssignmentDataSource = @TreatmentAssignmentDataSource,
+                        Flights = @Flights,
+                        FlightsSeparator = '|',
+                        FlightAppId = @FlightAppId,
+                        UsePUIDForConsumerData=@UsePUIDForConsumerData,
+                        MismatchPatchEnabled=@MismatchPatchEnabled,
+                        Region =  @Region
+                    );
+
+        #ENDIF
+
+        data = SELECT data.*, @Flights AS Flight FROM data INNER BROADCASTRIGHT JOIN usersOnFlight ON data.UserId == usersOnFlight.ExperimentalUnitId;
+        data = SELECT data.*, @Flights AS Flight FROM data INNER BROADCASTRIGHT JOIN usersOnFlight ON data.UserId == usersOnFlight.ExperimentalUnitId;
+    #ELSE
+        data = SELECT *, FlightId AS Flight FROM data;
+    #ENDIF
+
+    data = 
+        SELECT *,
+                IF(RouteName == "query", Utility.GetQueryInformationObject(QueryInformation), (QueryInformation)null) AS QueryInformationObject
+        FROM data;
+
+    // For QueryLength - ImpressionView incorrectly computes the QueryLength column for non suggestion routes, hence pulling it from QueryInfo object.
+    data = 
+        SELECT *,
+                IF (RouteName == "suggestions", TempQueryLength, Utility.GetQueryLength(QueryInformationObject, RouteName)) AS QueryLength
+        FROM data;
+
+    #IF(@LimitSearchRequestsToEmailSearch)
+
+        // Filtering the data to limit to - 
+        //  -- Message entity types and exchange provenance for search (limiting the search traffic to email)
+        //     Assumption : Each query request will contain ONLY 1 entityType and 1 provenance
+        // Using the C# operators to force compiler not to optimize
+        data = 
+            SELECT *,
+                   IF (RouteName != "query" , false, (QueryInformationObject != null  && QueryInformationObject.EntityRequests != null && QueryInformationObject.EntityRequests.Count() == 1 
+                       && QueryInformationObject.EntityRequests[0].Provenances != null && QueryInformationObject.EntityRequests[0].Provenances.Count() == 1))
+                       AS HasEntityTypeProvenance 
+            FROM data
+            HAVING 
+                   RouteName != "query" 
+                     || (HasEntityTypeProvenance 
+                         && (QueryInformationObject.EntityRequests[0].EntityType == "Message" || QueryInformationObject.EntityRequests[0].EntityType == "Conversation") 
+                         && QueryInformationObject.EntityRequests[0].Provenances[0] == "Exchange");
+
+    #ENDIF
+
+    // Why is this needed? - ImpressionGuid is primary key hence it should not be repeated
+    #IF(!@EntryPoints.Contains("teams.") AND NOT @LocalRunViaE2EValidationTool)
+	    [PARTITION(UserId)=(PARTITIONCOUNT=2000,PARTITIONFUNCTION=HASH)] //edit
+    #ENDIF
+    data =
+        SELECT 
+            *, 
+            ROW_NUMBER() OVER (PARTITION BY UserId, ImpressionId ORDER BY RequestDateTimeInUtcTicks ASC) AS __rank
+        FROM data
+        HAVING __rank == 1;
+
+    #IF(@RemoveBotTraffic)
+
+        // Identifying possible bot user ids
+        // Approach - Filter out the userIds with >= 2k requests per day
+        //            Assuming it takes high bound of 20 requests per search (including both QF & Search)
+        //            The above mentioned filter drops all users who has done > 100 searches per day.
+        //            This results in dropping < 500 users in desktop & owa classic. For React and Universal the drops are < 30 users.
+        dailyUserIdImpressionCount = 
+            SELECT RequestDate,
+                   UserId,
+                   COUNT (NormalizedImpressionGuid) AS TotalRequestCount
+            FROM data;
+
+		[ROWCOUNT=100]
+        possibleBotUserIds = 
+            SELECT RequestDate,
+                   UserId,
+                   TotalRequestCount
+            FROM   dailyUserIdImpressionCount
+            WHERE
+                   TotalRequestCount >= @RequestCountThresholdForBotUsers;
+
+		[ROWCOUNT=100]
+        possibleBotUserIds = 
+            SELECT DISTINCT UserId AS BotUserId
+            FROM possibleBotUserIds;
+
+        // Removing the requests for possible bot users.
+        data =
+            SELECT A.*
+            FROM data AS A
+                 LEFT BROADCASTRIGHT ANTISEMIJOIN
+                     possibleBotUserIds AS B
+                 ON A.UserId == B.BotUserId;
+
+
+        // Identifying possible conversations initiated by possible test accounts - avoiding data skews is the goal
+        // Approach - Filter out the conversation ids with >= 100 requests
+        //            Assuming it takes high bound of 20 requests per search (including both QF & Search)
+        //            100 requests is still a very high filter in throwing bad conversations
+        dailyConversationIdImpressionCount = 
+            SELECT RequestDate,
+                   NormalizedConversationId,
+                   COUNT (NormalizedImpressionGuid) AS TotalRequestCount
+            FROM data;
+
+		[ROWCOUNT=100]
+        possibleConversationIdsFromTestAccounts = 
+            SELECT RequestDate,
+                   NormalizedConversationId,
+                   TotalRequestCount
+            FROM   dailyConversationIdImpressionCount
+            WHERE
+                   TotalRequestCount >= @RequestCountThresholdForTestConversations;
+
+		[ROWCOUNT=100]
+        possibleConversationIdsFromTestAccounts = 
+            SELECT DISTINCT NormalizedConversationId AS TestConversationId
+            FROM possibleConversationIdsFromTestAccounts;
+
+        // Removing the requests for possible test conversations.
+        data =
+            SELECT A.*
+            FROM data AS A
+                 LEFT BROADCASTRIGHT ANTISEMIJOIN
+                     possibleConversationIdsFromTestAccounts AS B
+                 ON A.NormalizedConversationId == B.TestConversationId;
+
+    #ENDIF
+
+
+    #IF(@UseCafe)
+		#DECLARE CafeLogRoot string = string.Concat(@DependencyPreffix, "/local/Aggregated/Datasets/Public/Usage/Impression/RawCafeLogsHourly/");
+        #DECLARE TargetStartDate DateTime = DateTime.Parse(@StartDate);
+        #DECLARE TargetEndDate DateTime = DateTime.Parse(@EndDate);
+        #DECLARE StartHourMark string = @TargetStartDate.AddHours(0).ToString("yyyy-MM-ddTHH:00:00");
+        #DECLARE EndHourMark string = @TargetEndDate.AddHours(23).ToString("yyyy-MM-ddTHH:00:00");
+        RawCafeLogs =
+            SSTREAM STREAMSET @CafeLogRoot
+                    PATTERN @"%Year/%Month/RawCafeLogsHourly_%Year-%Month-%Day-%Hour.ss?ignored=%Minute,%Second"
+                    RANGE __datetime = [@StartHourMark, @EndHourMark]("01:00:00");
+
+        data =
+            SELECT B.*.Except(CafeHttpStatus, CafeTotalLatency),
+                   IF(Is3SRequest && A.Overall_total_request_time.HasValue, (double) A.Overall_total_request_time.Value, (double) 0) AS CafeTotalLatency,
+                   IF(Is3SRequest && !string.IsNullOrWhiteSpace(A.http_status), A.http_status, string.Empty) AS CafeHttpStatus
+            FROM data AS B
+            LEFT OUTER JOIN
+                RawCafeLogs AS A
+                ON A.normalized_request_id == B.ImpressionId;
+    #ENDIF
+
+    data =
+        SELECT RandomizationId,
+                UserId,
+                TenantId,
+                ExternalDirectoryObjectId,
+                UserType,
+                RequestDate,
+                RequestDateTimeInUTC,
+                RequestDateTimeInUtcTicks,
+                EntryPoint,
+                RouteName,
+                NormalizedConversationId,
+                NormalizedImpressionGuid,
+                ClientSessionId,
+                ServerSessionId,
+                QueryLength,
+                Ring,
+                HttpStatus,
+                ServerLatency,
+                CafeHttpStatus,
+                CafeTotalLatency,
+                ClientPerceivedHttpStatus,
+                E2ELatency,
+                EventsList,
+                DataSourceMap,
+                RenderedGroupNameToGroupInfoMap,
+                RenderedContent,
+                ResponseActions,
+                RequestContextInformation,
+                QueryInformation,
+                IF(string.IsNullOrEmpty(TempHardwareSkuType), Utility.GetHardwareSkuType(Utility.GetEnvironmentDetailsObject(EnvironmentContext)), TempHardwareSkuType) AS HardwareSkuType,
+                QueryOffset,
+                TriggerConditions,
+                Flight,
+                LogicalImpressionIsRendered,
+                LogicalImpressionE2ELatency,
+                ResultsRendered,
+                NormalizedLogicalId,
+                Is3SRequest,
+                IsLastRequestInLogicalImpression,
+                Vertical,
+                InputInformation,
+                QueryCategory,
+                ImpressionE2ERenderingLatency,
+                IsRendered,
+                ImpressionGuidToDataSourceMap,
+                LogicalRenderedContent,
+                IsS500,
+                IF(string.IsNullOrEmpty(RequestContextInformation), null, Utility.GetSearchPlatform(RequestContextInformation)) AS SearchPlatform,
+                UserAgent,
+                ClientVersion,
+                FlightId,
+                Page,
+                ProviderNameStatusMap,
+                ProviderNameLatencyMap,
+                Scopes,
+                AppInfo,
+                IsEU
+        FROM data;
+END;

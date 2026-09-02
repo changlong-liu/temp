@@ -1,0 +1,782 @@
+
+ 
+ 
+VIEW CopilotDataFusionView RETURN ROWSET PARAMS (
+
+	StartDateTime string,
+	EndDateTime string,
+	Region string DEFAULT = "RoW",
+	AppName string DEFAULT = "*",
+	Product string DEFAULT = "*",
+	Scenario string DEFAULT = "*",
+	ClientAppName string DEFAULT = "*",
+	ClientPlatform string DEFAULT = "*",
+	DeployRing string DEFAULT = "WW",
+	FeedbackDataJoinType string DEFAULT = "FeedbackDataNotIncluded",
+	FeedbackCUDJoinKey string DEFAULT = "MessageIdMessageId",
+	FeedbackSubmissionStartDateTime string DEFAULT = "",
+	FeedbackSubmissionEndDateTime string DEFAULT = "",
+	ScoreDataJoinType string DEFAULT = "None",
+	ScoreDataLoadingMode string DEFAULT = "UserBased",
+	CustomInput string DEFAULT = "",
+	CustomView string DEFAULT = "",
+	JoinType string DEFAULT = "OnlyUsage",
+	IsSawUsedForEU bool DEFAULT = true,
+	ContainsServerFlightsInfo bool DEFAULT = true,
+	IsFullSchema bool DEFAULT = false,
+	ConsumeHourly bool DEFAULT = false,
+	ConsumptionMode string DEFAULT = "Daily"
+ 
+)
+BEGIN  
+
+REFERENCE "CopilotDataFusionView.dll";
+USING CopilotDataFusionView;
+
+
+#DECLARE IsHourlyMode bool = Convert.ToBoolean("false");
+#DECLARE CopilotUsageViewConsumptionModeStr string ="daily,includeserversessionid,includefeedback";
+#DECLARE dataStartTime DateTime = DateTime.SpecifyKind(DateTime.Parse("2026-08-19T00:00:00",CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc);
+#DECLARE dataEndTime DateTime;
+
+            #SET dataEndTime = DateTime.SpecifyKind(DateTime.Parse("2026-08-25 23:59:58", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Utc).AddMilliseconds(-1);
+    
+#DECLARE RootFolderPath String = @"/shares/exchange.storage.prod/";
+#SET RootFolderPath = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/";
+
+
+
+UsageDataSetView = VIEW "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/CopilotUsage/View/CopilotUsageView.view"
+                    PARAMS
+                    (
+                        StartDateTime = @dataStartTime,
+                        EndDateTime = @dataEndTime,
+                        ConsumeHourly = @IsHourlyMode,
+                        ConsumptionMode = @CopilotUsageViewConsumptionModeStr,
+                        IsEuropeRegion = true
+                    );
+
+UsageDataSetView =
+    SELECT
+        *.ExceptIfExists( CiqInsertedEntityTypes, NoApologyDetectedState, CopilotExtensionIds, SecondsToNextTurn, ServerSessionId, SessionDurationInSeconds, SessionTotalTurnCount, SessionTurnSequenceNumber, StartTimeOfNextSession, SSSReducedResultsMessages, UsedEntityAnnotations, WebEnabled, TriggeredSource, ToolExecutionFlow, LLMAPITokensCountList, ConnectorCitations, PluginCitations, PluginExecutions,  ResponseActionList, SystemActionList, ReferenceCitations, DeployRing, CosmicPartition, Region, NormalizedCorrelationId, QuerySubmitProperties, CitationCount, SSSFlights, SydneyFlights, SSSRestrictedSearchMode, NudgeTriggered, SuggestionResults),
+        EnvironmentContext != null && EnvironmentContext.Count !=0 && EnvironmentContext.ContainsField("DeployRing") ? EnvironmentContext.DeployRing : (string)null AS DeployRing,
+        EnvironmentContext != null && EnvironmentContext.Count !=0 && EnvironmentContext.ContainsField("CosmicPartition") ? EnvironmentContext.CosmicPartition : (string)null AS CosmicPartition,
+        EnvironmentContext != null && EnvironmentContext.Count !=0 && EnvironmentContext.ContainsField("Region") ? EnvironmentContext.Region : (string)null AS Region,
+        (!string.IsNullOrEmpty(CorrelationId) ? CorrelationId.ToLowerInvariant().Replace("-", "") : (string)null) AS NormalizedCorrelationId,
+        Utility.GetQuerySubmitProperties(ResponseActionList) AS QuerySubmitProperties,
+        Utility.GetCitationsCount(ReferenceCitations) AS CitationCount,
+        String.Join(";", CiqInsertedEntityTypes.Where(x => !string.IsNullOrEmpty(x))) AS CiqInsertedEntityTypes,
+        Utility.GetLLMAPITokensCountList(LLMRequests) AS LLMAPITokensCountList,
+        NoApologyDetectedState == null? string.Empty : NoApologyDetectedState == true ? "Pass" : "Error" AS NoApologyDetectedState,
+        Utility.GetRestrictedSearchMode(SSSRequests) AS SSSRestrictedSearchMode,
+        CustomJsonConverter.JsonSerialize(ResponseActionList) AS ResponseActionList,
+        CustomJsonConverter.JsonSerialize(SystemActionList) AS SystemActionList,
+        Utility.ConvertArrayToString(ToolExecutionFlow) AS ToolExecutionFlow,
+        CustomJsonConverter.JsonSerialize(ReferenceCitations) AS ReferenceCitations,
+        (string)null AS AppFlavor,
+        Utility.GetFirstCopilotExtensionId(CopilotExtensionIds) AS CopilotExtensionIds,
+        CopilotExtensionIds AS CUDCopilotExtensionIds,
+        CustomJsonConverter.JsonSerialize(PluginExecutions) AS PluginInvocations,
+        Utility.GetTriggeredSource(SSSRequests, BingRequests) AS TriggeredSource,
+        (double?)null AS SecondsToNextTurn,
+        (string)null AS ServerSessionId,
+        (double?)null AS SessionDurationInSeconds,
+        (int?)null AS SessionTotalTurnCount,
+        (int?)null AS SessionTurnSequenceNumber,
+        (DateTime?)null AS StartTimeOfNextSession,
+        Utility.GetSSSReducedResultsMessages(SSSRequests) AS SSSReducedResultsMessages,
+        CustomJsonConverter.JsonSerialize(UsedEntityAnnotations) AS UsedEntityAnnotations,
+        NudgeTriggered.HasValue ? NudgeTriggered.Value.ToString() : null AS NudgeTriggered,
+        Utility.GeneratePluginCitationsToString(ReferenceCitations, SourceBranch) AS PluginCitations,
+        Utility.GenerateConnectorCitationsToString(ReferenceCitations, SourceBranch) AS ConnectorCitations,
+        Utility.GetFirstAgentExtendedDataToString(AgentExtendedData) AS DeclaritiveCopilotExtendedData,
+        CustomJsonConverter.JsonSerialize(SuggestionResults) AS SuggestionResults,
+        SuggestionResults != null ? SuggestionResults.Count : 0 AS NumSuggestedResponses,
+        Flights != null && Flights.Count !=0 && Flights.ContainsField("SSSFlights") ? Flights.SSSFlights : (string)null AS SSSFlights,
+        Flights != null && Flights.Count !=0 && Flights.ContainsField("SydneyFlights") ? Flights.SydneyFlights : (string)null AS SydneyFlights,
+        Flights != null && Flights.Count !=0 && Flights.ContainsField("ClientFlights") ? Flights.ClientFlights : (string)null AS ClientFlights,
+        Flights != null && Flights.Count !=0 && Flights.ContainsField("ShadowTriggerFlights") ? Flights.ShadowTriggerFlights : (string)null AS ShadowTriggerFlights,
+        Flights != null && Flights.Count !=0 && Flights.ContainsField("ShadowOverrideFlights") ? Flights.ShadowOverrideFlights : (string)null AS ShadowOverrideFlights
+    FROM UsageDataSetView;
+        
+UsageDataSetView =  SELECT *.RenameIfExists(RequestTime AS UsageDataSet_RequestTime, DeployRing AS UsageDataSet_DeployRing, RequestId AS UsageDataSet_RequestId, Locale AS UsageDataSet_Locale, ExperienceType AS UsageDataSet_ExperienceType, CiqInsertedEntityTypes AS UsageDataSet_CiqInsertedEntityTypes, AppName AS UsageDataSet_AppName, Product AS UsageDataSet_Product, IsEchoTraffic AS UsageDataSet_IsEchoTraffic, SourceBranch AS UsageDataSet_SourceBranch, ClientPlatform AS UsageDataSet_ClientPlatform, AppFlavor AS UsageDataSet_AppFlavor, SydneyAvailability AS UsageDataSet_SydneyAvailability, QuerySubmitProperties AS UsageDataSet_QuerySubmitProperties, Region AS UsageDataSet_Region, AadTenantId AS UsageDataSet_AadTenantId, CosmicPartition AS UsageDataSet_CosmicPartition, Oid AS UsageDataSet_Oid, CorrelationId AS UsageDataSet_CorrelationId, ConversationId AS UsageDataSet_ConversationId, CitationCount AS UsageDataSet_CitationCount, ChatFirstServiceResponse AS UsageDataSet_ChatFirstServiceResponse, ChatFirstChunkFinalResponse AS UsageDataSet_ChatFirstChunkFinalResponse, ChatLastChunkFinalResponse AS UsageDataSet_ChatLastChunkFinalResponse, NormalizedCorrelationId AS UsageDataSet_NormalizedCorrelationId, CopilotExtensionIds AS UsageDataSet_CopilotExtensionIds, CopilotExtensionState AS UsageDataSet_CopilotExtensionState, ConnectorCitations AS UsageDataSet_ConnectorCitations, PluginInvocations AS UsageDataSet_PluginInvocations, ClientAppName AS UsageDataSet_ClientAppName, Scenario AS UsageDataSet_Scenario, ReferenceCitations AS UsageDataSet_ReferenceCitations, ClientRegion AS UsageDataSet_ClientRegion, EchoExperiment AS UsageDataSet_EchoExperiment, IsDisengaged AS UsageDataSet_IsDisengaged, OrchestratorIterationCount AS UsageDataSet_OrchestratorIterationCount, UtteranceLength AS UsageDataSet_UtteranceLength, IsTestTraffic AS UsageDataSet_IsTestTraffic, SSSFlights AS UsageDataSet_SSSFlights, SydneyFlights AS UsageDataSet_SydneyFlights, IsSearchTriggered AS UsageDataSet_IsSearchTriggered, LLMAPITokensCountList AS UsageDataSet_LLMAPITokensCountList, Market AS UsageDataSet_Market, NoApologyDetectedState AS UsageDataSet_NoApologyDetectedState, SecondsToNextTurn AS UsageDataSet_SecondsToNextTurn, ServerSessionId AS UsageDataSet_ServerSessionId, SessionDurationInSeconds AS UsageDataSet_SessionDurationInSeconds, SessionTotalTurnCount AS UsageDataSet_SessionTotalTurnCount, SessionTurnSequenceNumber AS UsageDataSet_SessionTurnSequenceNumber, SSSEmptyResultRequests AS UsageDataSet_SSSEmptyResultRequests, SSSEmptyResultSuccessfulRequests AS UsageDataSet_SSSEmptyResultSuccessfulRequests, SSSQueryAPILatency AS UsageDataSet_SSSQueryAPILatency, SSSTotalIterations AS UsageDataSet_SSSTotalIterations, SSSTotalRequests AS UsageDataSet_SSSTotalRequests, SSSTotalResultsCount AS UsageDataSet_SSSTotalResultsCount, SSSTotalSuccessfulRequests AS UsageDataSet_SSSTotalSuccessfulRequests, StartTimeOfNextSession AS UsageDataSet_StartTimeOfNextSession, SSSReducedResultsMessages AS UsageDataSet_SSSReducedResultsMessages, SSSRestrictedSearchMode AS UsageDataSet_SSSRestrictedSearchMode, SydneyFirstChunkFinalResponse AS UsageDataSet_SydneyFirstChunkFinalResponse, ToolExecutionFlow AS UsageDataSet_ToolExecutionFlow, TurnNumberInConversation AS UsageDataSet_TurnNumberInConversation, UsedEntityAnnotations AS UsageDataSet_UsedEntityAnnotations, WebEnabledStatus AS UsageDataSet_WebEnabledStatus, TriggeredSource AS UsageDataSet_TriggeredSource, ResponseActionList AS UsageDataSet_ResponseActionList, SystemActionList AS UsageDataSet_SystemActionList, ClientEventCount AS UsageDataSet_ClientEventCount, ClientFlights AS UsageDataSet_ClientFlights, NudgeTriggered AS UsageDataSet_NudgeTriggered, PluginCitations AS UsageDataSet_PluginCitations, DeclaritiveCopilotExtendedData AS UsageDataSet_DeclaritiveCopilotExtendedData, CopilotProduct  AS UsageDataSet_CopilotProduct , LanguageMismatchType AS UsageDataSet_LanguageMismatchType, SuggestionResults AS UsageDataSet_SuggestionResults, NumSuggestedResponses AS UsageDataSet_NumSuggestedResponses, ChatFirstTokenRenderedModel AS UsageDataSet_ChatFirstTokenRenderedModel, ChatFirstTokenRenderedCoalesce AS UsageDataSet_ChatFirstTokenRenderedCoalesce, ChatLastTokenRenderedCoalesce AS UsageDataSet_ChatLastTokenRenderedCoalesce, SydneyFirstTokenRenderedModel AS UsageDataSet_SydneyFirstTokenRenderedModel, MessageId AS UsageDataSet_MessageId, SydneyFirstServiceResponse AS UsageDataSet_SydneyFirstServiceResponse, SydneyLastChunkFinalResponse AS UsageDataSet_SydneyLastChunkFinalResponse, SearchWebLatency AS UsageDataSet_SearchWebLatency, LLMSydneyLatency AS UsageDataSet_LLMSydneyLatency)
+                    FROM UsageDataSetView;
+
+UsageDataSetView =  SELECT *.RenameIfExists(ChatFirstTokenRendered AS UsageDataSet_ChatFirstChunkFinalResponse) FROM UsageDataSetView;
+
+
+// Define UsageData
+
+UsageData = SELECT * FROM UsageDataSetView;
+
+// Set CorrelationId, NormalizedCorrelationId, RequestId, NormalizedRequestId
+UsageData =
+    SELECT
+        *,
+        UsageDataSet_NormalizedCorrelationId AS NormalizedCorrelationId,
+        UsageDataSet_CorrelationId AS CorrelationId,
+        UsageDataSet_RequestId AS RequestId
+    FROM UsageData;
+
+UsageData =
+    SELECT
+        *,
+        (!string.IsNullOrEmpty(RequestId) ? RequestId.ToLowerInvariant().Replace("-", "") : string.Empty) AS NormalizedRequestId
+    FROM UsageData;
+
+
+#DECLARE ConsumptionModeValues = new ARRAY<string>{"hourly,edpsonly", "hourlyfast,edpsonly", "daily,edpsonly"};
+
+    
+  #IF(@CopilotUsageViewConsumptionModeStr NOT IN @ConsumptionModeValues)
+    #DECLARE ScoreDataStartTime String = @dataStartTime.ToString("yyyy-MM-dd");
+    #DECLARE ScoreDataEndTime String = @dataEndTime.ToString("yyyy-MM-dd");
+
+    #DECLARE ScoreDataStartTimeHourly String = @dataStartTime.ToString("yyyy-MM-ddTHH:mm:ss");
+    #DECLARE ScoreDataEndTimeHourly String = @dataEndTime.ToString("yyyy-MM-ddTHH:mm:ss");
+    
+    
+                                        ScoreDataDaily = 
+                    EXTRACT 
+                        	RequestId: string?,
+	IsEUDBTenant: bool?,
+	EyesOffScore_CorrelationId: string?,
+	EyesOffScore_OfficeRegion: string?,
+	EyesOffScore_DatasetCategory: string?,
+	citedcg_avg_cited_label: float?,
+	citedcg_sum_cited_label: float?,
+	citedcg_num_bad_cites: float?,
+	citedcg_num_good_cites: float?,
+	citedcg_num_enterprise_cites: float?,
+	citedcg_gcc: float?,
+	citedcg_one_centric: float?,
+	citedcg_max_label: float?,
+	citedcg_all_bad_cites: float?,
+	citedcg_has_good_cite: float?,
+	citedcg_all_bad_cites_v2: float?,
+	citedcg_has_good_cite_v2: float?,
+	citedcg_per_plugin: string?,
+	citedcg_per_entity_types: string?,
+	EyesOffSlicer_OfficeRegion: string?,
+	EyesOffSlicer_DatasetCategory: string?,
+	UtteranceGroup: string?,
+	UtteranceScenario: string?,
+	UtteranceTopic: string?,
+	UtteranceIntent: string?,
+	RequestTime: DateTime?,
+	MessageId: string?,
+	Invocations: string?,
+	EyesOnSlicer_CorrelationId: string?,
+	DWD_DIM_DeployRing: string?,
+	DWD_DIM_Locale: string?,
+	DWD_DIM_ExperienceType: string?,
+	DWD_DIM_QueryAnnotationTypes: string?,
+	DWD_DIM_AppName: string?,
+	DWD_DIM_Product: string?,
+	DWD_DIM_OriginalScenario: string?,
+	DWD_DIM_ClientPlatform: string?,
+	DWD_DIM_AppFlavor: string?,
+	DWD_DIM_SourceBranch: string?,
+	DWD_DIM_QuerySubmitProperties: string?,
+	DWD_FACT_ConversationId: string?,
+	DWD_FACT_CitationCount: int?,
+	DWD_FACT_ChatFSR: int?,
+	DWD_FACT_ChatFCFR: int?,
+	DWD_FACT_ChatLCFR: int?,
+	DWD_FACT_TriggeredSource: string?,
+	DWD_FACT_AvailabilityState: string?,
+	DWD_FACT_HasCitation: string?,
+	DWD_FACT_HasResponseClick: bool?,
+	DWD_FACT_HasQuerySubmit: bool?,
+	DWD_DIM_IsPureClientEvent: bool?,
+	DWD_DIM_UserType: string?,
+	DWD_DIM_EndpointLevel1: string?,
+	DWD_DIM_EndpointLevel2: string?,
+	DWD_DIM_LanguageTier: string?,
+	DWD_DIM_Scenario: string?,
+	DWD_DIM_SubScenario: string?,
+	DWD_DIM_Mainline_Agents: string?,
+	DWD_DIM_TriggeredSourceTypes: string?,
+	DWD_FACT_HasSuggestionClick: bool?,
+	DWD_FACT_HasSuggestionRender: bool?,
+	DWD_FACT_HasPagesClickedCreate: bool?,
+	DWD_FACT_CIQEntityClickedCount: int?,
+	DWD_FACT_CIQRenderedCount: int?,
+	DWD_FACT_SubmitFeedbackType: string?,
+	DWD_FACT_HasCopyClick: bool?,
+	DWD_FACT_Pages_HasOverallActions: bool?,
+	DWD_FACT_Pages_HasEditInPagesClick: bool?,
+	DWD_FACT_Pages_PageCreatedCount: int?,
+	DWD_FACT_IsWorkCitation: bool?,
+	DWD_FACT_IsSearchTriggered: bool?,
+	DWD_FACT_HasWebSearchTriggered: bool?,
+	DWD_FACT_HasM365SearchTriggered: bool?,
+	DWD_FACT_FeedbackTypes: string?,
+	DWD_FACT_IsEchoTraffic: bool?,
+	DWD_FACT_UtteranceLength: int?,
+	DWD_DIM_ResultSearchTypes: string?,
+	DWD_DIM_SourceTypes: string?,
+	DWD_FACT_CopilotExtensionIds: string?,
+	DWD_FACT_DeclarativeCopilotExtendedData: string?,
+	DWD_DIM_AgentAppKind: string?,
+	DWD_DIM_AgentBuilder: string?,
+	DWD_DIM_AgentCapabilities: string?,
+	DWD_DIM_AgentTitleId: string?,
+	DWD_DIM_AgentAppId: string?,
+	DWD_DIM_AgentType: string?,
+	DWD_DIM_AgentName: string?,
+	DayTime: string?,
+	EyesOffScoreMCP_OfficeRegion: string?,
+	EyesOffScoreMCP_DatasetCategory: string?,
+	MCPGroundLeoScore: float?,
+	HasAnswerInMCPGroundLeo: bool?,
+	NumSegmentsInMCPGroundLeo: float?,
+	IsChatInMCPPrompt: bool?,
+	IsVIInMCPPrompt: bool?,
+	HasTranscriptCitationInSydneyReply: bool?,
+	HasChatCitationInSydneyReply: bool?,
+	HasVICitationInSydneyReply: bool?,
+	PromptType: string?,
+	PromptId: string?,
+	ModelName: string?,
+	MetricsMetaData: string?,
+	EyesOffScoreChatSAT_CorrelationId: string?,
+	EyesOffScoreChatSAT_OfficeRegion: string?,
+	EyesOffScoreChatSAT_DatasetCategory: string?,
+	EyesOffScoreChatSAT_MetricsMetaData: string?,
+	chatsat_overall_sat: int?,
+	chatsat_overall_dsat: int?,
+	chatsat_intent_primary: string,
+	chatsat_intent_secondary: string,
+	chatsat_intent_confidence: float?,
+	chatsat_sentiment_score: float?,
+	chatsat_sentiment_confidence: float?,
+	chatsat_tc_relevance_score: float?,
+	chatsat_tc_relevance_confidence: float?,
+	chatsat_tc_contextual_score: float?,
+	chatsat_tc_contextual_confidence: float?,
+	chatsat_tc_completeness_score: float?,
+	chatsat_tc_completeness_confidence: float?,
+	chatsat_ux_score: float?,
+	chatsat_ux_confidence: float?,
+	chatsat_response_quality_score: float?,
+	chatsat_response_quality_confidence: float?,
+	EyesOffScoreChatSATS_CorrelationId: string?,
+	EyesOffScoreChatSATS_OfficeRegion: string?,
+	EyesOffScoreChatSATS_DatasetCategory: string?,
+	EyesOffScoreChatSATS_MetricsMetaData: string?,
+	chatsat_signal_inferred_score: float?,
+	chatsat_signal_inferred_confidence: float?,
+	chatsat_signal_inferred_sat: int?,
+	chatsat_signal_inferred_dsat: int?,
+	chatsat_signal_insights: string?,
+	chatsat_signal_detected_scenario: string?,
+	chatsat_signal_inferred_score_vnext: float?,
+	chatsat_signal_inferred_confidence_vnext: float?,
+	chatsat_signal_inferred_sat_vnext: int?,
+	chatsat_signal_inferred_dsat_vnext: int?,
+	chatsat_signal_inferred_result_vnext: string?,
+	chatsat_signal_insights_vnext: string?,
+	chatsat_signal_detected_scenario_vnext: string?,
+	EyesOffScoreSSR_OfficeRegion: string?,
+	EyesOffScoreSSR_DatasetCategory: string?,
+	EyesOffScoreSSR_MetricsMetaData: string?,
+	ComputedServerSessionId: string?,
+	SSRMetrics: string?,
+	EyesOffScoreSSR_CopilotAudience: string?,
+	IsSatisfied: string?,
+	IsDissatisfied: string?,
+	EyesOffScoreShadow_AadTenantId: string?,
+	EyesOffScoreShadow_AppName: string?,
+	EyesOffScoreShadow_AppScenario: string?,
+	EyesOffScoreShadow_ConversationId: string?,
+	EyesOffScoreShadow_DatasetCategory: string?,
+	EyesOffScoreShadow_ExperienceType: string?,
+	EyesOffScoreShadow_JobDate: DateTime?,
+	EyesOffScoreShadow_Language: string?,
+	EyesOffScoreShadow_Region: string?,
+	EyesOffScoreShadow_RequestTime: DateTime?,
+	EyesOffScoreShadow_Ring: string?,
+	EyesOffScoreShadow_TurnId: double?,
+	EyesOffScoreShadow_UserPUID: string?,
+	EyesOffScoreShadow_ObjectId: string?,
+	EyesOffScoreShadow_ParentRequestId: string?,
+	EyesOffScoreShadow_TrafficType: string?,
+	EyesOffScoreShadow_CorrelationId: string?,
+	EyesOffScoreShadow_ExperimentName: string?,
+	EyesOffScoreShadow_TurnLevelCorrelationId: string?,
+	EyesOffScoreShadow_CorrelationId_Base: string?,
+	EyesOffScoreShadow_OfficeRegion: string?,
+	EyesOffScoreShadow_JobHour: string?,
+	EyesOffScoreShadow_ShadowMetricsPerFlights: string?,
+	EyesOffScoreShadow_ShadowDebugMetricsPerFlights: string?,
+	ChatSATS_RequestTime: DateTime?,
+	ChatSATS_RequestId: string?,
+	ChatSATS_AadTenantId: string?,
+	ChatSATS_Oid: string?,
+	ChatSATS_Metrics: string?,
+	ChatSATS_chatsat_signal_inferred_score: double?,
+	ChatSATS_chatsat_signal_inferred_confidence: double?,
+	ChatSATS_chatsat_signal_inferred_sat: int?,
+	ChatSATS_chatsat_signal_inferred_dsat: int?,
+	ChatSATS_chatsat_signal_inferred_result: string?,
+	ChatSATS_chatsat_signal_insights: string?,
+	ChatSATS_chatsat_signal_detected_scenario: string?,
+	ChatSATS_chatsat_signal_inferred_score_vnext: double?,
+	ChatSATS_chatsat_signal_inferred_confidence_vnext: double?,
+	ChatSATS_chatsat_signal_inferred_sat_vnext: int?,
+	ChatSATS_chatsat_signal_inferred_dsat_vnext: int?,
+	ChatSATS_chatsat_signal_inferred_result_vnext: string?,
+	ChatSATS_chatsat_signal_insights_vnext: string?,
+	ChatSATS_chatsat_signal_detected_scenario_vnext: string?,
+	ChatSATS_OfficeRegion: string?,
+	CoMet_high_level_intent_RequestTime: DateTime?,
+	CoMet_high_level_intent_RequestId: string?,
+	CoMet_high_level_intent_AadTenantId: string?,
+	CoMet_high_level_intent_Oid: string?,
+	CoMet_high_level_intent_OfficeRegion: string?,
+	CoMet_high_level_intent_DatasetCategory: string?,
+	CoMet_high_level_intent_metrics: string?,
+	CoMet_intent_parse_RequestTime: DateTime?,
+	CoMet_intent_parse_RequestId: string?,
+	CoMet_intent_parse_AadTenantId: string?,
+	CoMet_intent_parse_Oid: string?,
+	CoMet_intent_parse_OfficeRegion: string?,
+	CoMet_intent_parse_DatasetCategory: string?,
+	CoMet_intent_parse_metrics: string?,
+                        __date
+                    FROM SPARSE STREAMSET @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Aggregated/Datasets/Public/CopilotScore/"
+                    PATTERN "Daily/%Y/%m/%d/CopilotScoreDataset_" + "EU" + "_EUDBTenant_%Y-%m-%d.ss"
+                    RANGE __date = [@ScoreDataStartTime, @ScoreDataEndTime]
+                    USING Extractors.SStream()
+                    UNION ALL
+                    EXTRACT 
+                        	RequestId: string?,
+	IsEUDBTenant: bool?,
+	EyesOffScore_CorrelationId: string?,
+	EyesOffScore_OfficeRegion: string?,
+	EyesOffScore_DatasetCategory: string?,
+	citedcg_avg_cited_label: float?,
+	citedcg_sum_cited_label: float?,
+	citedcg_num_bad_cites: float?,
+	citedcg_num_good_cites: float?,
+	citedcg_num_enterprise_cites: float?,
+	citedcg_gcc: float?,
+	citedcg_one_centric: float?,
+	citedcg_max_label: float?,
+	citedcg_all_bad_cites: float?,
+	citedcg_has_good_cite: float?,
+	citedcg_all_bad_cites_v2: float?,
+	citedcg_has_good_cite_v2: float?,
+	citedcg_per_plugin: string?,
+	citedcg_per_entity_types: string?,
+	EyesOffSlicer_OfficeRegion: string?,
+	EyesOffSlicer_DatasetCategory: string?,
+	UtteranceGroup: string?,
+	UtteranceScenario: string?,
+	UtteranceTopic: string?,
+	UtteranceIntent: string?,
+	RequestTime: DateTime?,
+	MessageId: string?,
+	Invocations: string?,
+	EyesOnSlicer_CorrelationId: string?,
+	DWD_DIM_DeployRing: string?,
+	DWD_DIM_Locale: string?,
+	DWD_DIM_ExperienceType: string?,
+	DWD_DIM_QueryAnnotationTypes: string?,
+	DWD_DIM_AppName: string?,
+	DWD_DIM_Product: string?,
+	DWD_DIM_OriginalScenario: string?,
+	DWD_DIM_ClientPlatform: string?,
+	DWD_DIM_AppFlavor: string?,
+	DWD_DIM_SourceBranch: string?,
+	DWD_DIM_QuerySubmitProperties: string?,
+	DWD_FACT_ConversationId: string?,
+	DWD_FACT_CitationCount: int?,
+	DWD_FACT_ChatFSR: int?,
+	DWD_FACT_ChatFCFR: int?,
+	DWD_FACT_ChatLCFR: int?,
+	DWD_FACT_TriggeredSource: string?,
+	DWD_FACT_AvailabilityState: string?,
+	DWD_FACT_HasCitation: string?,
+	DWD_FACT_HasResponseClick: bool?,
+	DWD_FACT_HasQuerySubmit: bool?,
+	DWD_DIM_IsPureClientEvent: bool?,
+	DWD_DIM_UserType: string?,
+	DWD_DIM_EndpointLevel1: string?,
+	DWD_DIM_EndpointLevel2: string?,
+	DWD_DIM_LanguageTier: string?,
+	DWD_DIM_Scenario: string?,
+	DWD_DIM_SubScenario: string?,
+	DWD_DIM_Mainline_Agents: string?,
+	DWD_DIM_TriggeredSourceTypes: string?,
+	DWD_FACT_HasSuggestionClick: bool?,
+	DWD_FACT_HasSuggestionRender: bool?,
+	DWD_FACT_HasPagesClickedCreate: bool?,
+	DWD_FACT_CIQEntityClickedCount: int?,
+	DWD_FACT_CIQRenderedCount: int?,
+	DWD_FACT_SubmitFeedbackType: string?,
+	DWD_FACT_HasCopyClick: bool?,
+	DWD_FACT_Pages_HasOverallActions: bool?,
+	DWD_FACT_Pages_HasEditInPagesClick: bool?,
+	DWD_FACT_Pages_PageCreatedCount: int?,
+	DWD_FACT_IsWorkCitation: bool?,
+	DWD_FACT_IsSearchTriggered: bool?,
+	DWD_FACT_HasWebSearchTriggered: bool?,
+	DWD_FACT_HasM365SearchTriggered: bool?,
+	DWD_FACT_FeedbackTypes: string?,
+	DWD_FACT_IsEchoTraffic: bool?,
+	DWD_FACT_UtteranceLength: int?,
+	DWD_DIM_ResultSearchTypes: string?,
+	DWD_DIM_SourceTypes: string?,
+	DWD_FACT_CopilotExtensionIds: string?,
+	DWD_FACT_DeclarativeCopilotExtendedData: string?,
+	DWD_DIM_AgentAppKind: string?,
+	DWD_DIM_AgentBuilder: string?,
+	DWD_DIM_AgentCapabilities: string?,
+	DWD_DIM_AgentTitleId: string?,
+	DWD_DIM_AgentAppId: string?,
+	DWD_DIM_AgentType: string?,
+	DWD_DIM_AgentName: string?,
+	DayTime: string?,
+	EyesOffScoreMCP_OfficeRegion: string?,
+	EyesOffScoreMCP_DatasetCategory: string?,
+	MCPGroundLeoScore: float?,
+	HasAnswerInMCPGroundLeo: bool?,
+	NumSegmentsInMCPGroundLeo: float?,
+	IsChatInMCPPrompt: bool?,
+	IsVIInMCPPrompt: bool?,
+	HasTranscriptCitationInSydneyReply: bool?,
+	HasChatCitationInSydneyReply: bool?,
+	HasVICitationInSydneyReply: bool?,
+	PromptType: string?,
+	PromptId: string?,
+	ModelName: string?,
+	MetricsMetaData: string?,
+	EyesOffScoreChatSAT_CorrelationId: string?,
+	EyesOffScoreChatSAT_OfficeRegion: string?,
+	EyesOffScoreChatSAT_DatasetCategory: string?,
+	EyesOffScoreChatSAT_MetricsMetaData: string?,
+	chatsat_overall_sat: int?,
+	chatsat_overall_dsat: int?,
+	chatsat_intent_primary: string,
+	chatsat_intent_secondary: string,
+	chatsat_intent_confidence: float?,
+	chatsat_sentiment_score: float?,
+	chatsat_sentiment_confidence: float?,
+	chatsat_tc_relevance_score: float?,
+	chatsat_tc_relevance_confidence: float?,
+	chatsat_tc_contextual_score: float?,
+	chatsat_tc_contextual_confidence: float?,
+	chatsat_tc_completeness_score: float?,
+	chatsat_tc_completeness_confidence: float?,
+	chatsat_ux_score: float?,
+	chatsat_ux_confidence: float?,
+	chatsat_response_quality_score: float?,
+	chatsat_response_quality_confidence: float?,
+	EyesOffScoreChatSATS_CorrelationId: string?,
+	EyesOffScoreChatSATS_OfficeRegion: string?,
+	EyesOffScoreChatSATS_DatasetCategory: string?,
+	EyesOffScoreChatSATS_MetricsMetaData: string?,
+	chatsat_signal_inferred_score: float?,
+	chatsat_signal_inferred_confidence: float?,
+	chatsat_signal_inferred_sat: int?,
+	chatsat_signal_inferred_dsat: int?,
+	chatsat_signal_insights: string?,
+	chatsat_signal_detected_scenario: string?,
+	chatsat_signal_inferred_score_vnext: float?,
+	chatsat_signal_inferred_confidence_vnext: float?,
+	chatsat_signal_inferred_sat_vnext: int?,
+	chatsat_signal_inferred_dsat_vnext: int?,
+	chatsat_signal_inferred_result_vnext: string?,
+	chatsat_signal_insights_vnext: string?,
+	chatsat_signal_detected_scenario_vnext: string?,
+	EyesOffScoreSSR_OfficeRegion: string?,
+	EyesOffScoreSSR_DatasetCategory: string?,
+	EyesOffScoreSSR_MetricsMetaData: string?,
+	ComputedServerSessionId: string?,
+	SSRMetrics: string?,
+	EyesOffScoreSSR_CopilotAudience: string?,
+	IsSatisfied: string?,
+	IsDissatisfied: string?,
+	EyesOffScoreShadow_AadTenantId: string?,
+	EyesOffScoreShadow_AppName: string?,
+	EyesOffScoreShadow_AppScenario: string?,
+	EyesOffScoreShadow_ConversationId: string?,
+	EyesOffScoreShadow_DatasetCategory: string?,
+	EyesOffScoreShadow_ExperienceType: string?,
+	EyesOffScoreShadow_JobDate: DateTime?,
+	EyesOffScoreShadow_Language: string?,
+	EyesOffScoreShadow_Region: string?,
+	EyesOffScoreShadow_RequestTime: DateTime?,
+	EyesOffScoreShadow_Ring: string?,
+	EyesOffScoreShadow_TurnId: double?,
+	EyesOffScoreShadow_UserPUID: string?,
+	EyesOffScoreShadow_ObjectId: string?,
+	EyesOffScoreShadow_ParentRequestId: string?,
+	EyesOffScoreShadow_TrafficType: string?,
+	EyesOffScoreShadow_CorrelationId: string?,
+	EyesOffScoreShadow_ExperimentName: string?,
+	EyesOffScoreShadow_TurnLevelCorrelationId: string?,
+	EyesOffScoreShadow_CorrelationId_Base: string?,
+	EyesOffScoreShadow_OfficeRegion: string?,
+	EyesOffScoreShadow_JobHour: string?,
+	EyesOffScoreShadow_ShadowMetricsPerFlights: string?,
+	EyesOffScoreShadow_ShadowDebugMetricsPerFlights: string?,
+	ChatSATS_RequestTime: DateTime?,
+	ChatSATS_RequestId: string?,
+	ChatSATS_AadTenantId: string?,
+	ChatSATS_Oid: string?,
+	ChatSATS_Metrics: string?,
+	ChatSATS_chatsat_signal_inferred_score: double?,
+	ChatSATS_chatsat_signal_inferred_confidence: double?,
+	ChatSATS_chatsat_signal_inferred_sat: int?,
+	ChatSATS_chatsat_signal_inferred_dsat: int?,
+	ChatSATS_chatsat_signal_inferred_result: string?,
+	ChatSATS_chatsat_signal_insights: string?,
+	ChatSATS_chatsat_signal_detected_scenario: string?,
+	ChatSATS_chatsat_signal_inferred_score_vnext: double?,
+	ChatSATS_chatsat_signal_inferred_confidence_vnext: double?,
+	ChatSATS_chatsat_signal_inferred_sat_vnext: int?,
+	ChatSATS_chatsat_signal_inferred_dsat_vnext: int?,
+	ChatSATS_chatsat_signal_inferred_result_vnext: string?,
+	ChatSATS_chatsat_signal_insights_vnext: string?,
+	ChatSATS_chatsat_signal_detected_scenario_vnext: string?,
+	ChatSATS_OfficeRegion: string?,
+	CoMet_high_level_intent_RequestTime: DateTime?,
+	CoMet_high_level_intent_RequestId: string?,
+	CoMet_high_level_intent_AadTenantId: string?,
+	CoMet_high_level_intent_Oid: string?,
+	CoMet_high_level_intent_OfficeRegion: string?,
+	CoMet_high_level_intent_DatasetCategory: string?,
+	CoMet_high_level_intent_metrics: string?,
+	CoMet_intent_parse_RequestTime: DateTime?,
+	CoMet_intent_parse_RequestId: string?,
+	CoMet_intent_parse_AadTenantId: string?,
+	CoMet_intent_parse_Oid: string?,
+	CoMet_intent_parse_OfficeRegion: string?,
+	CoMet_intent_parse_DatasetCategory: string?,
+	CoMet_intent_parse_metrics: string?,
+                        __date
+                    FROM SPARSE STREAMSET @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Aggregated/Datasets/Public/CopilotScore/"
+                    PATTERN "Daily/%Y/%m/%d/CopilotScoreDataset_" + "EU" + "_NonEUDBTenant_%Y-%m-%d.ss"
+                    RANGE __date = [@ScoreDataStartTime, @ScoreDataEndTime]
+                    USING Extractors.SStream();
+                    
+    ScoreDataDaily =
+        SELECT
+            *.Except(__date),
+            __date.ToString("yyyy-MM-dd") AS ScoreDayTime
+        FROM ScoreDataDaily;
+    
+        ScoreData = SELECT * FROM ScoreDataDaily;
+    
+    ScoreData =
+        SELECT
+            *.ExceptIfExists(
+                chatsat_ux_score,
+                chatsat_response_quality_score,
+                chatsat_ux_confidence,
+                chatsat_response_quality_confidence
+            ),
+            (chatsat_ux_score != null ? chatsat_ux_score : chatsat_response_quality_score) AS chatsat_response_quality_score,
+            (chatsat_ux_confidence != null ? chatsat_ux_confidence : chatsat_response_quality_confidence) AS chatsat_response_quality_confidence
+        FROM ScoreData;
+
+    // Adhoc logic, will remove in the future
+    ScoreData =
+        SELECT
+            *,
+            (string)""  AS DWD_FACT_ResponseActionList,
+            (string)""  AS DWD_FACT_SystemActionList
+        FROM ScoreData;
+
+    // Adhoc logic, will remove in the future
+    ScoreData =
+        SELECT
+            *,
+            Utility.ExtractValueFromJson<double?>(SSRMetrics, "chatsat_session_inferred_score") AS chatsat_session_inferred_score,
+            Utility.ExtractValueFromJson<int?>(SSRMetrics, "chatsat_session_inferred_success") AS chatsat_session_inferred_success,
+            Utility.ExtractValueFromJson<int?>(SSRMetrics, "chatsat_session_inferred_failure") AS chatsat_session_inferred_failure,
+            Utility.ExtractValueFromJson<string>(SSRMetrics, "chatsat_ssr_insights") AS chatsat_session_insights,
+            Utility.ExtractValueFromJson<string>(SSRMetrics, "data_source") AS chatsat_session_data_source
+        FROM ScoreData;
+
+    ScoreData =
+        SELECT *.ExceptIfExists(EyesOffScoreShadow_AadTenantId,EyesOffScoreShadow_AppName,EyesOffScoreShadow_AppScenario,EyesOffScoreShadow_ConversationId,EyesOffScoreShadow_DatasetCategory,EyesOffScoreShadow_ExperienceType,EyesOffScoreShadow_JobDate,EyesOffScoreShadow_Language,EyesOffScoreShadow_Region,EyesOffScoreShadow_RequestTime,EyesOffScoreShadow_Ring,EyesOffScoreShadow_TurnId,EyesOffScoreShadow_UserPUID,EyesOffScoreShadow_ObjectId,EyesOffScoreShadow_ParentRequestId,EyesOffScoreShadow_TrafficType,EyesOffScoreShadow_CorrelationId,EyesOffScoreShadow_ExperimentName,EyesOffScoreShadow_TurnLevelCorrelationId,EyesOffScoreShadow_CorrelationId_Base,EyesOffScoreShadow_OfficeRegion,EyesOffScoreShadow_JobHour,EyesOffScoreShadow_ShadowMetricsPerFlights, EyesOffScoreShadow_ShadowDebugMetricsPerFlights, SSRMetrics)
+            .Rename(REGEX("^(?!CoMet_)(.*)$") AS "ScoreWithSlicerData_${1}"),
+            EyesOffScoreShadow_AadTenantId,
+            EyesOffScoreShadow_AppName,
+            EyesOffScoreShadow_AppScenario,
+            EyesOffScoreShadow_ConversationId,
+            EyesOffScoreShadow_DatasetCategory,
+            EyesOffScoreShadow_ExperienceType,
+            EyesOffScoreShadow_JobDate,
+            EyesOffScoreShadow_Language,
+            EyesOffScoreShadow_Region,
+            EyesOffScoreShadow_RequestTime,
+            EyesOffScoreShadow_Ring,
+            EyesOffScoreShadow_TurnId,
+            EyesOffScoreShadow_UserPUID,
+            EyesOffScoreShadow_ObjectId,
+            EyesOffScoreShadow_ParentRequestId,
+            EyesOffScoreShadow_TrafficType,
+            EyesOffScoreShadow_CorrelationId,
+            EyesOffScoreShadow_ExperimentName,
+            EyesOffScoreShadow_TurnLevelCorrelationId,
+            EyesOffScoreShadow_CorrelationId_Base,
+            EyesOffScoreShadow_OfficeRegion,
+            EyesOffScoreShadow_JobHour,
+            EyesOffScoreShadow_ShadowMetricsPerFlights,
+            EyesOffScoreShadow_ShadowDebugMetricsPerFlights,
+            (!string.IsNullOrEmpty(RequestId)
+                ? RequestId.ToLowerInvariant().Replace("-", "")
+                : string.Empty) AS ScoreWithSlicerData_NormalizedRequestId
+        FROM ScoreData;
+
+        ScoreDataToJoin =
+        SELECT *
+        FROM ScoreData
+        WHERE !string.IsNullOrEmpty(ScoreWithSlicerData_NormalizedRequestId);
+
+    ScoreDataNotToJoin =
+        SELECT *
+        FROM ScoreData
+        WHERE string.IsNullOrEmpty(ScoreWithSlicerData_NormalizedRequestId);
+
+    // Join key: RequestId
+    
+    
+    FusionData =
+        SELECT
+            A.*,
+            B.*
+        FROM UsageData AS A
+        LEFT JOIN ScoreDataToJoin AS B
+            ON A.NormalizedRequestId == B.ScoreWithSlicerData_NormalizedRequestId;
+
+    
+    // Add IsOnlyScoreData column
+    FusionData =
+        SELECT
+            *,
+            IF(
+                ScoreWithSlicerData_NormalizedRequestId != NULL 
+                AND NormalizedRequestId == NULL, 
+                true, 
+                false
+            ) AS IsOnlyScoreData
+        FROM FusionData;
+      #ELSE
+     RAISE ERROR ("Invalid parameter combination: 'ScoreLeftJoinUsage' or 'ScoreRightJoinUsage' join for ScoreDataJoinType is only supported when ConsumptionMode does not include 'onlyedps'. Please adjust parameters accordingly.");
+  #ENDIF
+
+
+
+
+// Apply filter
+
+
+
+
+
+
+
+    FusionData = SELECT *.ExceptIfExists(CorrelationId, NormalizedCorrelationId, RequestId)
+                 FROM FusionData;
+
+    FusionData = SELECT *.RenameIfExists(	UsageDataSet_RequestTime AS RequestTime,
+	UsageDataSet_DeployRing AS DeployRing,
+	UsageDataSet_RequestId AS RequestId,
+	UsageDataSet_Locale AS Locale,
+	UsageDataSet_ExperienceType AS ExperienceType,
+	UsageDataSet_CiqInsertedEntityTypes AS CiqInsertedEntityTypes,
+	UsageDataSet_AppName AS AppName,
+	UsageDataSet_Product AS Product,
+	UsageDataSet_IsEchoTraffic AS IsEchoTraffic,
+	UsageDataSet_SourceBranch AS SourceBranch,
+	UsageDataSet_ClientPlatform AS ClientPlatform,
+	UsageDataSet_AppFlavor AS AppFlavor,
+	UsageDataSet_SydneyAvailability AS SydneyAvailability,
+	UsageDataSet_QuerySubmitProperties AS QuerySubmitProperties,
+	UsageDataSet_Region AS Region,
+	UsageDataSet_AadTenantId AS AadTenantId,
+	UsageDataSet_CosmicPartition AS CosmicPartition,
+	UsageDataSet_Oid AS Oid,
+	UsageDataSet_CorrelationId AS CorrelationId,
+	UsageDataSet_ConversationId AS ConversationId,
+	UsageDataSet_CitationCount AS CitationCount,
+	UsageDataSet_ChatFirstServiceResponse AS ChatFirstServiceResponse,
+	UsageDataSet_ChatFirstChunkFinalResponse AS ChatFirstChunkFinalResponse,
+	UsageDataSet_ChatLastChunkFinalResponse AS ChatLastChunkFinalResponse,
+	UsageDataSet_NormalizedCorrelationId AS NormalizedCorrelationId,
+	UsageDataSet_CopilotExtensionIds AS CopilotExtensionIds,
+	UsageDataSet_CopilotExtensionState AS CopilotExtensionState,
+	UsageDataSet_ConnectorCitations AS ConnectorCitations,
+	UsageDataSet_PluginInvocations AS PluginInvocations,
+	UsageDataSet_ClientAppName AS ClientAppName,
+	UsageDataSet_Scenario AS Scenario,
+	UsageDataSet_ReferenceCitations AS ReferenceCitations,
+	UsageDataSet_ClientRegion AS ClientRegion,
+	UsageDataSet_EchoExperiment AS EchoExperiment,
+	UsageDataSet_IsDisengaged AS IsDisengaged,
+	UsageDataSet_OrchestratorIterationCount AS OrchestratorIterationCount,
+	UsageDataSet_UtteranceLength AS UtteranceLength,
+	UsageDataSet_IsTestTraffic AS IsTestTraffic,
+	UsageDataSet_SSSFlights AS SSSFlights,
+	UsageDataSet_SydneyFlights AS SydneyFlights,
+	UsageDataSet_IsSearchTriggered AS IsSearchTriggered,
+	UsageDataSet_LLMAPITokensCountList AS LLMAPITokensCountList,
+	UsageDataSet_Market AS Market,
+	UsageDataSet_NoApologyDetectedState AS NoApologyDetectedState,
+	UsageDataSet_SecondsToNextTurn AS SecondsToNextTurn,
+	UsageDataSet_ServerSessionId AS ServerSessionId,
+	UsageDataSet_SessionDurationInSeconds AS SessionDurationInSeconds,
+	UsageDataSet_SessionTotalTurnCount AS SessionTotalTurnCount,
+	UsageDataSet_SessionTurnSequenceNumber AS SessionTurnSequenceNumber,
+	UsageDataSet_SSSEmptyResultRequests AS SSSEmptyResultRequests,
+	UsageDataSet_SSSEmptyResultSuccessfulRequests AS SSSEmptyResultSuccessfulRequests,
+	UsageDataSet_SSSQueryAPILatency AS SSSQueryAPILatency,
+	UsageDataSet_SSSTotalIterations AS SSSTotalIterations,
+	UsageDataSet_SSSTotalRequests AS SSSTotalRequests,
+	UsageDataSet_SSSTotalResultsCount AS SSSTotalResultsCount,
+	UsageDataSet_SSSTotalSuccessfulRequests AS SSSTotalSuccessfulRequests,
+	UsageDataSet_StartTimeOfNextSession AS StartTimeOfNextSession,
+	UsageDataSet_SSSReducedResultsMessages AS SSSReducedResultsMessages,
+	UsageDataSet_SSSRestrictedSearchMode AS SSSRestrictedSearchMode,
+	UsageDataSet_SydneyFirstChunkFinalResponse AS SydneyFirstChunkFinalResponse,
+	UsageDataSet_ToolExecutionFlow AS ToolExecutionFlow,
+	UsageDataSet_TurnNumberInConversation AS TurnNumberInConversation,
+	UsageDataSet_UsedEntityAnnotations AS UsedEntityAnnotations,
+	UsageDataSet_WebEnabledStatus AS WebEnabledStatus,
+	UsageDataSet_TriggeredSource AS TriggeredSource,
+	UsageDataSet_ResponseActionList AS ResponseActionList,
+	UsageDataSet_SystemActionList AS SystemActionList,
+	UsageDataSet_ClientEventCount AS ClientEventCount,
+	UsageDataSet_ClientFlights AS ClientFlights,
+	UsageDataSet_NudgeTriggered AS NudgeTriggered,
+	UsageDataSet_PluginCitations AS PluginCitations,
+	UsageDataSet_DeclaritiveCopilotExtendedData AS DeclaritiveCopilotExtendedData,
+	UsageDataSet_CopilotProduct  AS CopilotProduct ,
+	UsageDataSet_LanguageMismatchType AS LanguageMismatchType,
+	UsageDataSet_SuggestionResults AS SuggestionResults,
+	UsageDataSet_NumSuggestedResponses AS NumSuggestedResponses,
+	UsageDataSet_ChatFirstTokenRenderedModel AS ChatFirstTokenRenderedModel,
+	UsageDataSet_ChatFirstTokenRenderedCoalesce AS ChatFirstTokenRenderedCoalesce,
+	UsageDataSet_ChatLastTokenRenderedCoalesce AS ChatLastTokenRenderedCoalesce,
+	UsageDataSet_SydneyFirstTokenRenderedModel AS SydneyFirstTokenRenderedModel,
+	UsageDataSet_MessageId AS MessageId,
+	UsageDataSet_SydneyFirstServiceResponse AS SydneyFirstServiceResponse,
+	UsageDataSet_SydneyLastChunkFinalResponse AS SydneyLastChunkFinalResponse,
+	UsageDataSet_SearchWebLatency AS SearchWebLatency,
+	UsageDataSet_LLMSydneyLatency AS LLMSydneyLatency)
+                 FROM FusionData;
+
+    FusionData = SELECT *.ExceptIfExists(UsageDataSet_RequestTime, M365ChatView_RequestTime, UsageDataSet_DeployRing, M365ChatView_DeployRing, UsageDataSet_RequestId, M365ChatView_RequestId, UsageDataSet_Locale, M365ChatView_Locale, UsageDataSet_ExperienceType, M365ChatView_ExperienceType, UsageDataSet_CiqInsertedEntityTypes, M365ChatView_CiqInsertedEntityTypes, UsageDataSet_AppName, M365ChatView_AppName, UsageDataSet_Product, M365ChatView_Product, UsageDataSet_IsEchoTraffic, M365ChatView_IsEchoTraffic, UsageDataSet_SourceBranch, M365ChatView_SourceBranch, UsageDataSet_ClientPlatform, M365ChatView_ClientPlatform, UsageDataSet_AppFlavor, M365ChatView_AppFlavor, UsageDataSet_SydneyAvailability, M365ChatView_SydneyAvailability, UsageDataSet_QuerySubmitProperties, M365ChatView_QuerySubmitProperties, UsageDataSet_Region, M365ChatView_Region, UsageDataSet_AadTenantId, M365ChatView_AadTenantId, UsageDataSet_CosmicPartition, M365ChatView_CosmicPartition, UsageDataSet_Oid, M365ChatView_Oid, UsageDataSet_CorrelationId, M365ChatView_CorrelationId, UsageDataSet_ConversationId, M365ChatView_ConversationId, UsageDataSet_CitationCount, M365ChatView_CitationCount, UsageDataSet_ChatFirstServiceResponse, M365ChatView_ChatFirstServiceResponse, UsageDataSet_ChatFirstChunkFinalResponse, M365ChatView_ChatFirstChunkFinalResponse, UsageDataSet_ChatLastChunkFinalResponse, M365ChatView_ChatLastChunkFinalResponse, UsageDataSet_NormalizedCorrelationId, M365ChatView_NormalizedCorrelationId, UsageDataSet_CopilotExtensionIds, M365ChatView_CopilotExtensionIds, UsageDataSet_CopilotExtensionState, M365ChatView_CopilotExtensionState, UsageDataSet_ConnectorCitations, M365ChatView_ConnectorCitations, UsageDataSet_PluginInvocations, M365ChatView_PluginInvocations, UsageDataSet_ClientAppName, M365ChatView_ClientAppName, UsageDataSet_Scenario, M365ChatView_Scenario, UsageDataSet_ReferenceCitations, M365ChatView_ReferenceCitations, UsageDataSet_ClientRegion, M365ChatView_ClientRegion, UsageDataSet_EchoExperiment, M365ChatView_EchoExperiment, UsageDataSet_IsDisengaged, M365ChatView_IsDisengaged, UsageDataSet_OrchestratorIterationCount, M365ChatView_OrchestratorIterationCount, UsageDataSet_UtteranceLength, M365ChatView_UtteranceLength, UsageDataSet_IsTestTraffic, M365ChatView_IsTestTraffic, UsageDataSet_SSSFlights, M365ChatView_SSSFlights, UsageDataSet_SydneyFlights, M365ChatView_SydneyFlights, UsageDataSet_IsSearchTriggered, M365ChatView_IsSearchTriggered, UsageDataSet_LLMAPITokensCountList, M365ChatView_LLMAPITokensCountList, UsageDataSet_Market, M365ChatView_Market, UsageDataSet_NoApologyDetectedState, M365ChatView_NoApologyDetectedState, UsageDataSet_SecondsToNextTurn, M365ChatView_SecondsToNextTurn, UsageDataSet_ServerSessionId, M365ChatView_ServerSessionId, UsageDataSet_SessionDurationInSeconds, M365ChatView_SessionDurationInSeconds, UsageDataSet_SessionTotalTurnCount, M365ChatView_SessionTotalTurnCount, UsageDataSet_SessionTurnSequenceNumber, M365ChatView_SessionTurnSequenceNumber, UsageDataSet_SSSEmptyResultRequests, M365ChatView_SSSEmptyResultRequests, UsageDataSet_SSSEmptyResultSuccessfulRequests, M365ChatView_SSSEmptyResultSuccessfulRequests, UsageDataSet_SSSQueryAPILatency, M365ChatView_SSSQueryAPILatency, UsageDataSet_SSSTotalIterations, M365ChatView_SSSTotalIterations, UsageDataSet_SSSTotalRequests, M365ChatView_SSSTotalRequests, UsageDataSet_SSSTotalResultsCount, M365ChatView_SSSTotalResultsCount, UsageDataSet_SSSTotalSuccessfulRequests, M365ChatView_SSSTotalSuccessfulRequests, UsageDataSet_StartTimeOfNextSession, M365ChatView_StartTimeOfNextSession, UsageDataSet_SSSReducedResultsMessages, M365ChatView_SSSReducedResultsMessages, UsageDataSet_SSSRestrictedSearchMode, M365ChatView_SSSRestrictedSearchMode, UsageDataSet_SydneyFirstChunkFinalResponse, M365ChatView_SydneyFirstChunkFinalResponse, UsageDataSet_ToolExecutionFlow, M365ChatView_ToolExecutionFlow, UsageDataSet_TurnNumberInConversation, M365ChatView_TurnNumberInConversation, UsageDataSet_UsedEntityAnnotations, M365ChatView_UsedEntityAnnotations, UsageDataSet_WebEnabledStatus, M365ChatView_WebEnabledStatus, UsageDataSet_TriggeredSource, M365ChatView_TriggeredSource, UsageDataSet_ResponseActionList, M365ChatView_ResponseActionList, UsageDataSet_SystemActionList, M365ChatView_SystemActionList, UsageDataSet_ClientEventCount, M365ChatView_ClientEventCount, UsageDataSet_ClientFlights, M365ChatView_ClientFlights, UsageDataSet_NudgeTriggered, M365ChatView_NudgeTriggered, UsageDataSet_PluginCitations, M365ChatView_PluginCitations, UsageDataSet_DeclaritiveCopilotExtendedData, M365ChatView_DeclaritiveCopilotExtendedData, UsageDataSet_CopilotProduct , M365ChatView_CopilotProduct , UsageDataSet_LanguageMismatchType, M365ChatView_LanguageMismatchType, UsageDataSet_SuggestionResults, M365ChatView_SuggestionResults, UsageDataSet_NumSuggestedResponses, M365ChatView_NumSuggestedResponses, UsageDataSet_ChatFirstTokenRenderedModel, M365ChatView_ChatFirstTokenRenderedModel, UsageDataSet_ChatFirstTokenRenderedCoalesce, M365ChatView_ChatFirstTokenRenderedCoalesce, UsageDataSet_ChatLastTokenRenderedCoalesce, M365ChatView_ChatLastTokenRenderedCoalesce, UsageDataSet_SydneyFirstTokenRenderedModel, M365ChatView_SydneyFirstTokenRenderedModel, UsageDataSet_MessageId, M365ChatView_MessageId, UsageDataSet_SydneyFirstServiceResponse, M365ChatView_SydneyFirstServiceResponse, UsageDataSet_SydneyLastChunkFinalResponse, M365ChatView_SydneyLastChunkFinalResponse, UsageDataSet_SearchWebLatency, M365ChatView_SearchWebLatency, UsageDataSet_LLMSydneyLatency, M365ChatView_LLMSydneyLatency)
+                       FROM FusionData;
+
+FusionData = SELECT *,
+                    "onlyusage" AS JoinType
+             FROM FusionData;
+
+END VIEW

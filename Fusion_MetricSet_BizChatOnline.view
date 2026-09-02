@@ -1,0 +1,2599 @@
+ /* ---------------------------------------------------------------------------------------------------
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+     
+    Author: josleep (Cloned from Solan's Metric Set with Unified view changes)
+    Description: BizChat Metrics Online
+    Output: 1 row per turn
+
+------------------------------------------------------------------------------------------------------ */
+CREATE VIEW MetricSet_MSAI_BizChat_Online
+SCHEMA
+(
+    TIMESTAMP : DateTime, 
+    DeployRing : string,
+    Region : string,
+    // TraceId : string,
+    CorrelationId : string,
+    TurnLevelCorrelationId : string,
+    TurnId : string,
+    // MessageId : string,
+    Origin : string, 
+    BotRequestId : string,
+    BotConversationId : string,
+    TotalNumUserMessages : int, 
+    // Source : string,
+    Market : string,
+    Locale : string,
+    NumSuggestedResponses : int,
+    // Offense : string,
+    CosmicPartition : string,
+    TenantId : string,
+    ObjectId : string,
+    ClientSessionId: string,
+    ExperienceType : string,
+    QueryAnnotationTypes : string,
+    // ExperienceTypeServer : string,
+    AppName : string, 
+    Product : string,
+    Scenario : string,
+    // UsedReferences : string,
+    BotUsedReferences : string,
+    IsEchoTraffic : bool,
+    SourceBranch : string,
+	ClientPlatform: string,
+	ClientRegion: string,
+	UsedEntityAnnotations: string,
+    IsDisengaged : bool,
+    ChatFSR : int?,
+    ChatFSR_R9 : int?,
+    ChatFCFR : int?,
+    ChatFCFR_R9 : int?,
+    ChatLCFR : int?,
+    ChatLCFR_R9 : int?,
+    LLMReason: int?,
+    LLMReasonResponse: int?,
+    LLMReasonUserQuery: int?,
+    LLMResponse_FirstToken: int?,
+    sssQueryAPI: int?,
+    sssQueryAPI_R9: int?,
+    sss_EmailsSearchLatency_Iter1: int?,
+    sss_EmailsSearchLatency_Iter2: int?,
+    sss_EmailsSearchLatency_AllIter: int?,
+    sss_FilesSearchLatency_Iter1: int?,
+    sss_FilesSearchLatency_Iter2: int?,
+    sss_FilesSearchLatency_AllIter: int?,
+    sss_ChatSearchLatency_Iter1: int?,
+    sss_ChatSearchLatency_Iter2: int?,
+    sss_ChatSearchLatency_AllIter: int?,
+    sss_MeetingsSearchLatency_Iter1: int?,
+    sss_MeetingsSearchLatency_Iter2: int?,
+    sss_MeetingsSearchLatency_AllIter: int?,
+    sss_PeopleSearchLatency_Iter1: int?,
+    sss_PeopleSearchLatency_Iter2: int?,
+    sss_PeopleSearchLatency_AllIter: int?,
+    sss_Personal_FilesSearchLatency_Iter1: int?,
+    sss_Personal_FilesSearchLatency_Iter2: int?,
+    sss_Personal_FilesSearchLatency_AllIter: int?,
+    // sss_TeamsSearchLatency_Iter1: int?,
+    // sss_TeamsSearchLatency_Iter2: int?,
+    // sss_TeamsSearchLatency_AllIter: int?,
+    // sss_CalendarSearchLatency_Iter1: int?,
+    // sss_CalendarSearchLatency_Iter2: int?,
+    // sss_CalendarSearchLatency_AllIter: int?,
+    SSS_EmailContent_Iter1: int?,
+    SSS_EmailContent_Iter2: int?,
+    SSS_EmailContent_AllIter: int?,
+    SSS_ExternalContent_Iter1: int?,
+    SSS_ExternalContent_Iter2: int?,
+    SSS_ExternalContent_AllIter: int?,
+    SSS_FileContent_Iter1: int?,
+    SSS_FileContent_Iter2: int?,
+    SSS_FileContent_AllIter: int?,
+    SSS_EventContent_Iter1: int?,
+    SSS_EventContent_Iter2: int?,
+    SSS_EventContent_AllIter: int?,
+    SSS_GraphConnector_Iter1: int?,
+    SSS_GraphConnector_Iter2: int?,
+    SSS_GraphConnector_AllIter: int?,
+    sss_SlowestSearchProviderLatency_Iter1: int?,
+    sss_SlowestSearchProviderLatency_Iter2: int?,
+    sss_SlowestSearchProviderLatency_AllIter: int?,
+    sss_SlowestSearchProviderName_Iter1: string,
+    sss_SlowestSearchProviderName_Iter2: string,
+	// ChatFTR: int?,
+	SydAmlReasoningTotal: int?,
+	SydAmlReasoningTotal_UserQuery: int?,
+	SydAmlRespondingFirstToken: int?,
+	SydAmlReasoningTotal_ResponseReady: int?,
+    E2ENRRState : string,
+	NoApologyDetectedState : string,
+	SydneyFCFR: int?,
+    SydneyFCFR_R9: int?,
+    AvailabilityState : string,
+    AppFlavor: string,
+    CitationCount : int?,
+    UtteranceLength : int?,
+    OrchestratorIterationCount : int?,
+    SubstrateSearchReducedResultsMessages : string,
+    ToolExecutionFlow : string,
+    // SkillOrderInvocation : string,
+    WebEnabled: string,
+    EchoExperiment : string,
+    // SubstrateSearchTransactionIdsLoggedBySydney : string,
+    SubstrateSearchRestrictedSearchMode : string,
+    // SubstrateSearchRequestInfo : string,
+    sssEmptyResultRequests : int?,
+    sssEmptyResultSuccessfulRequests : int?,
+    sssTotalRequests : int?,
+    sssTotalSuccessfulRequests : int?,
+    sssTotalIterations : int?,
+    sssTotalResultsCount : int?,
+    isSearchTriggered : int?,
+    NudgeTriggered: string?,
+	TurnLevelResponseActionsString: string,
+	TurnLevelSystemActionsString: string,
+	// ConversationLevelResponseActionsString: string,
+	// ConversationLevelSystemActionsString: string,
+    LLMAPITokensCountList: string,
+	QuerySubmitProperties: string,
+	ServerSessionId: string,
+    ComputedServerSessionId: string,
+	SecondsToNextTurn: double?,
+	SessionDurationInSeconds: double?,
+	StartTimeOfNextSession: DateTime?,
+	SessionTurnSequenceNumber: int?,
+	SessionTotalTurnCount: int?,
+    CopilotProduct: string,
+    CopilotExtensionIds : string?,
+    CopilotExtensionState : string,
+    LanguageMismatchType: string,
+    IsUpiaUserMessageTriggered: bool?,
+    IsXpiaToolOutputTriggered: bool?,
+    IsCopyrightViolationTriggered: bool?,
+    IsUserMessageBlockListTriggered: bool?,
+    IsBotResponseBlockListTriggered: bool?,
+    SearchStrategyClassification: string,
+    ClientAppVersion : string,
+    IsWorkSearchEnabled : bool?,
+    CIQEntityTypesWithMetadata : string,
+    IsBotOffensiveClassifierTriggered : bool?,
+    CounterfactualLogging: string,
+    ReportLengthControl : string,
+    PreProcessedExecutionControls : string,
+    FileSizeCategory : string,
+    FileHasImage : string,
+
+
+    // Feedback data
+    CopilotFeedbackData_FeedbackActionList: string,
+    
+    // Score Data
+    citedcg_avg_cited_label: float?, 
+    citedcg_sum_cited_label: float?, 
+    citedcg_num_bad_cites: float?, 
+    citedcg_num_good_cites: float?, 
+    citedcg_num_enterprise_cites: float?, 
+    citedcg_gcc: float?, 
+    citedcg_one_centric: float?, 
+    citedcg_max_label: float?, 
+    citedcg_all_bad_cites: float?, 
+    citedcg_has_good_cite: float?, 
+    citedcg_all_bad_cites_v2: float?, 
+    citedcg_has_good_cite_v2: float?,
+    chatsat_overall_sat: int?,
+    chatsat_overall_dsat: int?,
+    chatsat_intent_primary: string,
+    chatsat_intent_secondary: string,
+    chatsat_intent_confidence: float?,
+    chatsat_sentiment_score: float?,
+    chatsat_sentiment_confidence: float?,
+    chatsat_signal_inferred_score: float?,
+    chatsat_signal_inferred_confidence: float?,
+    chatsat_signal_inferred_sat: int?,
+    chatsat_signal_inferred_dsat: int?,
+    chatsat_signal_insights: string,
+    chatsat_signal_detected_scenario: string?,
+    chatsat_signal_inferred_score_vnext: float?,
+    chatsat_signal_inferred_confidence_vnext: float?,
+    chatsat_signal_inferred_sat_vnext: int?,
+    chatsat_signal_inferred_dsat_vnext: int?,
+    chatsat_signal_insights_vnext: string?,
+    chatsat_signal_detected_scenario_vnext: string?,
+    chatsat_tc_relevance_score: float?,
+    chatsat_tc_relevance_confidence: float?,
+    chatsat_tc_contextual_score: float?,
+    chatsat_tc_contextual_confidence: float?,
+    chatsat_tc_completeness_score: float?,
+    chatsat_tc_completeness_confidence: float?,
+    chatsat_response_quality_score: float?,
+    chatsat_response_quality_confidence: float?,
+    chatsat_session_inferred_score: double?,
+    chatsat_session_inferred_success: int?,
+    chatsat_session_inferred_failure: int?,
+    chatsat_session_insights: string,
+    chatsat_session_data_source: string,
+    SSR_OfficeRegion: string,
+    ChatSATS_OfficeRegion: string,  
+    ChatSAT_OfficeRegion: string,
+    UtteranceGroup: string,
+    UtteranceScenario: string,
+    UtteranceIntent: string,
+    IDEAs_IsSatisfied : string?,
+    IDEAs_IsDissatisfied : string?,
+    ShadowTriggerFlights:string,
+    ShadowOverrideFlights:string,
+    FluxVersion:string,
+    OrchestratorName:string,  
+    DeclaritiveCopilotExtendedData:string?,
+    MessageAuthor:string,
+    MessageType:string,
+    FromHistory:bool?,
+    TurnType:string,
+    OptionVariantsSet:string,
+    RequestPerfSegments:string,
+    FluxLoopCount:int?,
+    ToolTriggerCount:int?,
+    ChatFirstTokenRenderedUnaccounted:int?,
+    SydneyFirstTokenResponseModelToFirstTokenResponse:int?,
+    SydneyFirstTokenResponseToLastTokenResponse:int?,
+    SydneyLLMFirstTokenLatency:int?,
+    SydneyLLMFirstTokenPreFirstTokenResponseModel:int?,
+    SydneyLLMFirstTokenPreFirstTokenResponse:int?,
+    SydneyLLMFirstTokenPostFirstTokenResponse:int?,
+    SydneyLLMFirstVisibleToken:int?,
+    SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel:int?,
+    SydneyLLMFirstVisibleTokenPreFirstTokenResponse:int?,
+    SydneyLLMFirstVisibleTokenPostFirstTokenResponse:int?,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel:int?,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel_R9:int?,
+    SydneyLLMCriticalPathPreFirstTokenResponse:int?,
+    SydneyLLMCriticalPathPostFirstTokenResponse:int?,
+    SydneyLLMRespondingTokenStream:int?,
+    SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel:int?,
+    SydneyLLMRespondingTokenStreamPreFirstTokenResponse:int?,
+    SydneyLLMRespondingTokenStreamPostFirstTokenResponse:int?,
+    SydneyLLMToolInvocationTokenStream:int?,
+    SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel:int?,
+    SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse:int?,
+    SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse:int?,
+    ModelCalls_InvokingFunction:int?,
+    ModelCalls_Responding:int?,
+    ModelCalls_InvokingFunction_Responding:int?,
+    ModelCalls:int?,
+    TotalLLMCalls:int?,
+    MessageCounts:int?,
+    LLMInputTokenInvokingFunction:int?,
+    LLMOutputTokenInvokingFunction:int?,
+    LLMInputTokenResponding:int?,
+    LLMOutputTokenResponding:int?,
+    LLMInputTokenInvokingFunction_Responding:int?,
+    LLMOutputTokenInvokingFunction_Responding:int?,
+    LLMInputToken:int?,
+    LLMOutputToken:int?,
+    LLMContextTokensIter1:int?,
+    LLMContextTokensIter2:int?,
+    LLMContextTokensIterGrt3:int?,
+    LLMUncachedContextTokensIter1:int?,
+    LLMUncachedContextTokensIter2:int?,
+    LLMUncachedContextTokensIterGrt3:int?,
+    LLMCachedContextTokensIter1:int?,
+    LLMCachedContextTokensIter2:int?,
+    LLMCachedContextTokensIterGrt3:int?,
+    LLMCacheHitRateIter1:double?,
+    LLMCacheHitRateIter2:double?,
+    LLMCacheHitRateIterGrt3:double?,
+    LLMLatency:string,
+    SearchPostFirstTokenReponse:int?,
+    SSS_Transcripts_Iter1:int?,
+    SSS_Transcripts_Iter2:int?,
+    SSS_Moments_Iter1:int?,
+    SSS_Moments_Iter2:int?,
+    SSS_Moments_RunAsync_Iter1:int?,
+    SSS_Moments_RunAsync_Iter2:int?,
+    SSS_Moments_RunAsync_MomentsContentProvider_Iter1:int?,
+    SSS_Moments_RunAsync_MomentsContentProvider_Iter2:int?,
+    SSS_Moments_RunAsync_MomentsProvider_Iter1:int?,
+    SSS_Moments_RunAsync_MomentsProvider_Iter2:int?,
+    SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1:int?,
+    SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2:int?,
+    UserPerceivedLoadTime:int?,
+    InputPaint:int?,
+    MetaOsLoad:int?,
+    SessionsPaint:int?,
+    ZqPaint:int?,
+    LuClassification : string,
+    ChatMode : string,
+    RealTimeConnection_DurationInMs : int?,
+    RealTimeConnection_SetupLatencyInMs : int?,
+    RealTimeConnection_Status : string,
+    ExtensionExecutionFlow_ExtensionNames : string,
+    ExtensionExecutionFlow_ExtensionOutcomes : string,
+    ExtensionExecutionFlow_Timestamps : string,
+    ClientInformation_DeviceOS: string,
+    ClientInformation_DeviceType: string,
+    UserIdPUID : string,
+    EndpointL1 : string,
+    EndpointL2 : string,
+    CustomInstructionUpsertResult: string,
+    PersonalizationSettings: string,
+    SkdsMetrics: string,
+    SSSRequests: string,
+    SydneyLatency: string,
+    MeteringCheckResponse: string,
+    ClientLatency: string,
+    ChatPlusPages: string,
+    ClientInformation: string,
+    LLMRequests: string,
+    BingRequests : string,
+    ProductInformation: string,
+    AgentExtendedData: string,
+    ToolExecutionDetails: string,
+    RaiPoliciesConfiguration: string,
+    SafetyRouterTriggered: bool?,
+    ScorecardSessionId: string,
+    FromCode: string,
+    FileExtensions: string,
+    IntentSegmentation: string,
+    R9Latency : string,
+    IsAgentRuntime : bool?,
+    AgentRuntime : string,
+    PluginInvocations: string,
+    Tone : string,
+    RealtimeTurnResult : string,
+    FeedbackThumbsClicks : string,
+    ClientPreferences: string,
+    RealtimeTurnPlaybackInterruption: string,
+    OfficeCopilot: string,
+    RAIClassifiersTriggered: string,
+    AgentExtendedDataArray: string,
+    Apis: string,
+    IsDegradedResponse : bool?,
+    DataverseRequests : string,
+    SpawnedTaskIds: string,
+    VisualInsightsData: string,
+    DatasetCategory: string,
+    BackgroundTaskData: string,
+    TaskId: string,
+    LLMGroundingEntities: string,
+    ImageSourceBreakdown : string,
+    EditableBlockGenerated : string,
+    MessageStreamingMetricsExecutionEvent : string,
+    SkillsInfo : string,
+    ShoppingBerryForwardedProductCount : int?,
+    CuaPluginInfo : string,
+    LLMRequestsArray : ARRAY<STRUCT<Timestamp: DateTime?, Id:string, LLMModel: string, HttpStatus:string, Latency: double?, TokensCount: STRUCT<CallTag:string, InputTokenType:string, InputTokensCount:long?, OutputTokensCount:long?, CachedTokensCount:long?, ReasoningTokensCount:long?>, LLMModelName: string, ModelClassification: string, SwitcherModelOutput: string, ResolvedModelName: string, LowValueContentMetrics: STRUCT<lowValueContentCharLength:long?, toolsCharLength:long?, totalCharLength:long?, ImagePlaceholderRule:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, DuplicateText:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, SharingHistoryNoise:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, LargeOpaqueUid:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, AllZeroGuid:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, ExcessivePunctuation:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, ExcessiveWhitespace:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>>, CacheabilityMetrics: STRUCT<OverallCharSize:long?, StaticPromptCharSize:long?, ToolDefinitionSize:long?, ToolGuidanceSize:long?, InnerMonologueSize:long?>, HttpStatusCode: int?, LlmScenarioId: string, LlmApiType: string, PromptSections: ARRAY<STRUCT<Role:string, Name:string, LengthInChars:int?, SectionKind:string>> >>,
+
+    // CUD Reflection Metrics
+    ReflectionMetrics : Microsoft.SCOPE.Types.ScopeMap<string, string>,
+    ssr_inferred_score : double?,
+    ssr_inferred_success : bool?,
+    ssr_inferred_failure : bool?,
+    ssr_inferred_insights : System.Collections.Generic.Dictionary<string, string>,
+
+    // VIP identity flags (populated when @ExtraOptions contains "JoinVIPUsersAndTenants")
+    IsVIPUser : bool?,
+    IsVIPTenant : bool?,
+
+    FromHistory_TurnLevelResponseActionsString: string,
+    FromHistory_FeedbackActionList: string,
+    FromHistory_TurnCount: int?,
+
+    // Group flights, appended to end after stripping allocation ids
+    SydFlights: string,
+    sssFlights: string,
+    ClientFlights : string,
+
+    // Shadow A/B Specific Columns
+    Shadow_E2ENRR : double?,
+    Shadow_Availability : double?,
+    Shadow_ChatFCFR : int?,
+    Shadow_LLMReason : int?,
+    Shadow_LLMReasonResponse : int?,
+    Shadow_LLMReasonUserQuery : int?,
+    Shadow_LLMResponse_FirstToken : int?,
+    Shadow_SydneyFCFR : int?,
+    Shadow_ChatLCFR : int?,
+    Shadow_sssQueryAPI : int?,
+    Shadow_SydneyFCFR_NullFlag : int,
+    Shadow_ChatFCFR_NullFlag : int,
+    Shadow_LLMReason_NullFlag : int,
+    Shadow_LLMReasonResponse_NullFlag : int,
+    Shadow_LLMReasonUserQuery_NullFlag : int,
+    Shadow_LLMResponse_FirstToken_NullFlag : int,
+    Shadow_ChatLCFR_NullFlag : int,
+    Shadow_sssQueryAPI_NullFlag : int,
+    Shadow_SydneyLLMFirstTokenLatency : int?,
+    Shadow_SydneyLLMFirstTokenLatency_NullFlag : int,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel : int?,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag : int,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse : int?,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag : int,
+    Shadow_LLMCriticalPathFirstTokenResponse : int?,
+    Shadow_LLMCriticalPathFirstTokenResponse_NullFlag : int,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel : int?,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag : int,
+    Shadow_LLMInputToken : int?,
+    Shadow_LLMInputToken_NullFlag : int,
+    Shadow_LLMInputTokenInvokingFunction : int?,
+    Shadow_LLMInputTokenInvokingFunction_NullFlag : int,
+    Shadow_LLMInputTokenResponding : int?,
+    Shadow_LLMInputTokenResponding_NullFlag : int,
+    Shadow_LLMInputTokenInvokingFunction_Responding : int?,
+    Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag : int,
+    Shadow_IsValidPair : bool,
+    // Intersected T/C Flight
+    Flight : string
+)
+PARAMS
+(
+    StartDateTime string,
+    EndDateTime string DEFAULT = "",
+    TreatmentAssignmentDataSource string DEFAULT = "odinvariantconfigv2",
+    Flights string,
+    PropagateFlightToAllTurns bool DEFAULT = false, // Defaults to false, except if TreatmentAssignmentDataSource is metaosflight
+    DateTimeFilter bool DEFAULT = true, // Defaults to false, except if TreatmentAssignmentDataSource is metaosflight
+    TrafficFiltersDeployRing string DEFAULT = "", // e.g. "WW,SDFV2"
+    TrafficFiltersCosmicPartition string DEFAULT = "",
+    ManagementGroup string DEFAULT = "",
+    Region string DEFAULT = "ROW",  // "ROW" or "EU"
+    EchoExperimentName string DEFAULT = "",
+    SourceName string DEFAULT = "", //semicolon separated, e.g. "m365chat;teamshub"
+    TakeAllIterations bool DEFAULT = false,
+    CustomInput string DEFAULT = "",
+    JoinType string DEFAULT = "onlyusage",
+    StripAllocationIds bool DEFAULT = true,
+    IncludeFeedback bool DEFAULT = false,
+    IncludeScores bool DEFAULT = false,
+    IncludeFastScores bool DEFAULT = false,
+    IncludeCatalystTraffic bool DEFAULT = false,
+    UseFusionV2 bool DEFAULT = true,
+    // Adding new echo override parameter
+    IsEchoExperiment bool DEFAULT = false,
+    FilterPassiveUsers bool DEFAULT = true,
+    MetaOSFilter bool DEFAULT = false,
+    ScenarioListFilter string DEFAULT = "*",
+    Variant3SFlightOverride bool DEFAULT = false,
+    JoinToIDEAsTelemetry bool DEFAULT = false,
+    IdeasTelemetrySource string DEFAULT = "All",
+    ConsumptionMode string DEFAULT = "Daily",  // Hourly | HourlyFast
+    CustomView string DEFAULT = "CUD:PROD",
+    IncludeFromHistoryTurns bool DEFAULT = false,
+    CopilotProductFilter string DEFAULT = "", // "BizChat-Work|BizChat-Web"
+    Environment string DEFAULT = "WW", // WW | GCC
+    TenantBased bool DEFAULT = false, // Whether to load score data in tenant-based mode
+    ScenarioFilter string DEFAULT = "", // pipe-separated scenario prefixes, e.g. "outlookmobile|unionocm"
+    MobileFilter string DEFAULT = "false", // Filter to mobile clients only (iOS, Android), string for ExP managementGroup overrides
+    ExtraOptions string DEFAULT = "" // String-based extra options for flags that are easy to extend
+)
+AS
+BEGIN
+
+REFERENCE "BizChatOnlineMetricSetView.dll";
+USING BizChatOnlineMetricSetView;
+
+#DECLARE JSONPath = @"/shares/exchange.storage.prod/local/MSAI/CopilotDataFusionViewV2/Newtonsoft.Json.dll";
+#IF (@Region.ToLower() == "eu")
+    #SET JSONPath = "abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/CopilotDataFusionViewV2/Newtonsoft.Json.dll";
+#ENDIF
+REFERENCE @JSONPath;
+
+#SET @@ManagedOperatorChain = false;
+    
+#IF(@EndDateTime == "")
+    #SET EndDateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateTime),DateTimeKind.Utc).AddDays(1).ToString("yyyy-MM-dd HH:mm:ss");
+#ENDIF
+
+// Remove one millisecond to make the date range boundary is non-inclusive on new date.
+#SET EndDateTime = DateTime.Parse(@EndDateTime).AddMilliseconds(-1).ToString("yyyy-MM-dd HH:mm:ss");
+
+#IF(@TrafficFiltersCosmicPartition == "{TrafficFilters.Partition}")
+    #SET TrafficFiltersCosmicPartition = "";
+#ENDIF
+#IF(@TrafficFiltersDeployRing == "{TrafficFilters.DeployRing}" || @TrafficFiltersDeployRing == "{TrafficFilters.deploymentring}")
+    #SET TrafficFiltersDeployRing = "";
+#ENDIF
+
+#IF(@Variant3SFlightOverride)
+    #SET ManagementGroup = "3svariantconfig";
+#ENDIF
+
+// not iterpolated - set to ""
+#IF(!string.IsNullOrEmpty(@ScenarioFilter) && @ScenarioFilter == "{BizChatDataSourceParameterOverrides.ScenarioFilter}")
+    #SET ScenarioFilter = "";
+#ENDIF
+
+#IF(!string.IsNullOrEmpty(@MobileFilter) && @MobileFilter == "{BizChatDataSourceParameterOverrides.MobileFilter}")
+    #SET MobileFilter = "false";
+#ENDIF
+
+// SET MANAGEMENT GROUP SPECIFIC PARAMETERS - default to SydneyFlights
+#IF(!string.IsNullOrEmpty(@ManagementGroup) && @ManagementGroup != "{ApplicableDataSourceParameterOverrides.ManagementGroup}" && @ManagementGroup != "{BizChatDataSourceParameterOverrides.ManagementGroup}")
+    #IF(@ManagementGroup == "o365substratenorthstarsearch" || @ManagementGroup == "3svariantconfig")
+        #SET TreatmentAssignmentDataSource = "3sflight";
+    #ENDIF
+    #IF(@ManagementGroup.ToLower().Contains("client") || @ManagementGroup.ToLower().Contains("mobile"))
+        #SET TreatmentAssignmentDataSource = "clientflight";
+    #ENDIF
+    #IF(@ManagementGroup == "ideas") // set by exp config
+        #SET TreatmentAssignmentDataSource = "ideas";
+    #ENDIF
+#ENDIF
+
+#IF(@JoinToIDEAsTelemetry)
+    // datasource boolean override
+    SET TreatmentAssignmentDataSource = "ideas";
+#ENDIF
+
+#IF(string.IsNullOrEmpty(@IdeasTelemetrySource) || @IdeasTelemetrySource == "{BizChatDataSourceParameterOverrides.IDEAsTelemetrySource}")
+    // default to all if not set properly
+    #SET IdeasTelemetrySource = "All";
+#ENDIF
+
+// SET FLIGHT STRIP ALLOCATION IDS to false by default
+#SET StripAllocationIds = false;
+
+// Strip allocation ids from default 3s or echo experiments
+#IF((@ManagementGroup == "o365substratenorthstarsearch" && @Variant3SFlightOverride != true) || @IsEchoExperiment)
+    #SET StripAllocationIds = true;
+#ENDIF
+
+#IF(@StripAllocationIds)
+    // set allocation id map
+    #DECLARE FlightAllocationMap MAP<string, string> = MAP.Create(@Flights.ToUpper().Split('|').ToDictionary(x => x.Split(':')[0], x => x));
+    
+    // strip allocation id from 3s flight params
+    #SET Flights = string.Join("|", @Flights.ToUpper().Split('|').Select(x => x.Split(':')[0]));
+#ENDIF
+
+// Read in FusionV2 RoW/EU Module
+#DECLARE CopilotDataFusionViewPath string = "/shares/exchange.storage.prod/local/MSAI/CopilotDataFusionViewV2/CopilotDataFusionModuleRoW.module";
+    
+#IF (@Region.ToLower() == "eu")
+    #SET CopilotDataFusionViewPath = "abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/CopilotDataFusionViewV2/CopilotDataFusionModuleEU.module";
+#ENDIF
+
+MODULE @CopilotDataFusionViewPath AS CDFModule;
+
+data =
+    CDFModule.CopilotDataFusionView
+    (
+        StartDateTime  = @StartDateTime,
+        EndDateTime = @EndDateTime,
+        Region = @Region,
+        AppName = "*",
+        Product = "*",
+        Scenario = "*",
+        ClientAppName = "*",
+        ClientPlatform = "*",
+        #IF(!string.IsNullOrEmpty(@CustomInput))
+        CustomInput = @CustomInput,
+        #ENDIF
+        FeedbackDataJoinType = "FeedbackDataNotIncluded",
+        #IF(@IncludeScores||@IncludeFastScores)
+        ScoreDataJoinType = "ScoreRightJoinUsage",
+        #IF(@TenantBased) // TODO: Make this default after testing
+        ScoreDataLoadingMode="TenantBased",
+        #ENDIF
+        #ENDIF
+        ConsumptionMode = @ConsumptionMode,
+        CustomView = @CustomView,
+        #IF(@Environment == "GCC")
+        DeployRing = @Environment,
+        #ENDIF
+        JoinType = "onlyusage"
+    );
+
+data = SELECT 
+    RequestTime.Value AS TIMESTAMP, 
+    DeployRing AS DeployRing,
+    Region AS Region,
+    // TraceId,
+    CorrelationId AS CorrelationId,
+    TurnLevelCorrelationId AS TurnLevelCorrelationId,
+    ChatMode == "Realtime" ? TurnLevelCorrelationId : CorrelationId AS TurnId,
+    // MessageId AS MessageId,
+    ClientAppName AS Origin, 
+    RequestId AS BotRequestId,
+    ConversationId AS BotConversationId,
+    TurnNumberInConversation.HasValue ? TurnNumberInConversation.Value : 0 AS TotalNumUserMessages, 
+    // Source,
+    Market AS Market,
+    Locale AS Locale,
+    // bug workaround for when includeScore returns NumSuggestedResponses as int?
+    ((int ?)NumSuggestedResponses) ?? 0 AS NumSuggestedResponses,
+    // Offense,
+    CosmicPartition AS CosmicPartition,
+    AadTenantId AS TenantId,
+    Oid AS ObjectId,
+    ClientSessionId,
+    ExperienceType != null ? ExperienceType : "" AS ExperienceType,
+    CiqInsertedEntityTypes AS QueryAnnotationTypes,
+    // ExperienceTypeServer,
+    AppName AS AppName, 
+    Product AS Product,
+    Scenario AS Scenario,
+    // UsedReferences,
+    ReferenceCitations AS BotUsedReferences,
+    IsEchoTraffic.HasValue ? IsEchoTraffic.Value: false AS IsEchoTraffic,
+    SourceBranch AS SourceBranch,
+	ClientPlatform AS ClientPlatform,
+	ClientRegion AS ClientRegion,
+	UsedEntityAnnotations,
+    IsDisengaged.HasValue ? IsDisengaged.Value: false AS IsDisengaged,
+    SydneyFlights AS SydFlights,
+    (string) null AS sssFlights,
+    ClientFlights,
+    ChatFirstServiceResponse AS ChatFSR,
+    R9Latency != null && R9Latency.Count != 0 && R9Latency.ContainsField("ChatFirstServiceResponse") ? R9Latency.GetField<int?>("ChatFirstServiceResponse") : (int?)null AS ChatFSR_R9,
+    ChatFirstChunkFinalResponse AS ChatFCFR,
+    R9Latency != null && R9Latency.Count != 0 && R9Latency.ContainsField("ChatFirstChunkFinalResponse") ? R9Latency.GetField<int?>("ChatFirstChunkFinalResponse") : (int?)null AS ChatFCFR_R9,
+    ChatLastChunkFinalResponse AS ChatLCFR,
+    R9Latency != null && R9Latency.Count != 0 && R9Latency.ContainsField("ChatLastChunkFinalResponse") ? R9Latency.GetField<int?>("ChatLastChunkFinalResponse") : (int?)null AS ChatLCFR_R9,
+    (int?) null AS LLMReason,
+    (int?) null AS LLMReasonResponse,
+    (int?) null AS LLMReasonUserQuery,
+    (int?) null AS LLMResponse_FirstToken,
+    (int?) null AS sssQueryAPI,
+    (int?) null AS sssQueryAPI_R9,
+    (int?) null AS sss_EmailsSearchLatency_Iter1,
+    (int?) null AS sss_EmailsSearchLatency_Iter2,
+    (int?) null AS sss_EmailsSearchLatency_AllIter,
+    (int?) null AS sss_FilesSearchLatency_Iter1,
+    (int?) null AS sss_FilesSearchLatency_Iter2,
+    (int?) null AS sss_FilesSearchLatency_AllIter,
+    (int?) null AS sss_ChatSearchLatency_Iter1,
+    (int?) null AS sss_ChatSearchLatency_Iter2,
+    (int?) null AS sss_ChatSearchLatency_AllIter,
+    (int?) null AS sss_MeetingsSearchLatency_Iter1,
+    (int?) null AS sss_MeetingsSearchLatency_Iter2,
+    (int?) null AS sss_MeetingsSearchLatency_AllIter,
+    (int?) null AS sss_PeopleSearchLatency_Iter1,
+    (int?) null AS sss_PeopleSearchLatency_Iter2,
+    (int?) null AS sss_PeopleSearchLatency_AllIter,
+    (int?) null AS sss_Personal_FilesSearchLatency_Iter1,
+    (int?) null AS sss_Personal_FilesSearchLatency_Iter2,
+    (int?) null AS sss_Personal_FilesSearchLatency_AllIter,
+    // sss_TeamsSearchLatency_Iter1,
+    // sss_TeamsSearchLatency_Iter2,
+    // sss_TeamsSearchLatency_AllIter,
+    // sss_CalendarSearchLatency_Iter1,
+    // sss_CalendarSearchLatency_Iter2,
+    // sss_CalendarSearchLatency_AllIter,
+    (int?) null AS SSS_EmailContent_Iter1,
+    (int?) null AS SSS_EmailContent_Iter2,
+    (int?) null AS SSS_EmailContent_AllIter,
+    (int?) null AS SSS_ExternalContent_Iter1,
+    (int?) null AS SSS_ExternalContent_Iter2,
+    (int?) null AS SSS_ExternalContent_AllIter,
+    (int?) null AS SSS_FileContent_Iter1,
+    (int?) null AS SSS_FileContent_Iter2,
+    (int?) null AS SSS_FileContent_AllIter,
+    (int?) null AS SSS_EventContent_Iter1,
+    (int?) null AS SSS_EventContent_Iter2,
+    (int?) null AS SSS_EventContent_AllIter,
+    (int?) null AS SSS_GraphConnector_Iter1,
+    (int?) null AS SSS_GraphConnector_Iter2,
+    (int?) null AS SSS_GraphConnector_AllIter,
+    (int?) null AS sss_SlowestSearchProviderLatency_Iter1,
+    (int?) null AS sss_SlowestSearchProviderLatency_Iter2,
+    (int?) null AS sss_SlowestSearchProviderLatency_AllIter,
+    (string) null AS sss_SlowestSearchProviderName_Iter1,
+    (string) null AS sss_SlowestSearchProviderName_Iter2,
+	// ChatFTR,
+	(int?) null AS SydAmlReasoningTotal,
+	(int?) null AS SydAmlReasoningTotal_UserQuery,
+	(int?) null AS SydAmlRespondingFirstToken,
+	(int?) null AS SydAmlReasoningTotal_ResponseReady,
+    NoApologyDetectedState AS E2ENRRState,
+	NoApologyDetectedState AS NoApologyDetectedState,
+	SydneyFirstChunkFinalResponse AS SydneyFCFR,
+    R9Latency != null && R9Latency.Count != 0 && R9Latency.ContainsField("SydneyFirstChunkFinalResponse") ? R9Latency.GetField<int?>("SydneyFirstChunkFinalResponse") : (int?)null AS SydneyFCFR_R9,
+    SydneyAvailability AS AvailabilityState,
+    AppFlavor AS AppFlavor,
+    (int?)CitationCount AS CitationCount,
+    UtteranceLength AS UtteranceLength,
+    OrchestratorIterationCount AS OrchestratorIterationCount,
+    SSSReducedResultsMessages AS SubstrateSearchReducedResultsMessages,
+    ToolExecutionFlow AS ToolExecutionFlow,
+    // SkillOrderInvocation,
+    WebEnabledStatus AS WebEnabled,
+    EchoExperiment AS EchoExperiment,
+    // SSSTransactionIdsLoggedBySydney AS SubstrateSearchTransactionIdsLoggedBySydney,
+    SSSRestrictedSearchMode AS SubstrateSearchRestrictedSearchMode,
+    // SubstrateSearchRequestInfo,
+    SSSEmptyResultRequests AS sssEmptyResultRequests,
+    SSSEmptyResultSuccessfulRequests AS sssEmptyResultSuccessfulRequests,
+    SSSTotalRequests AS sssTotalRequests,
+    SSSTotalSuccessfulRequests AS sssTotalSuccessfulRequests,
+    SSSTotalIterations AS sssTotalIterations,
+    SSSTotalResultsCount AS sssTotalResultsCount,
+    IsSearchTriggered AS isSearchTriggered,
+    NudgeTriggered, 
+    ResponseActionList AS TurnLevelResponseActionsString, 
+    SystemActionList AS TurnLevelSystemActionsString,
+    // ConversationLevelResponseActionsString,
+    // ConversationLevelSystemActionsString,
+    LLMAPITokensCountList AS LLMAPITokensCountList,
+	QuerySubmitProperties AS QuerySubmitProperties,	
+    ServerSessionId AS ServerSessionId,
+    ComputedServerSessionId AS ComputedServerSessionId,
+	SecondsToNextTurn AS SecondsToNextTurn,
+	SessionDurationInSeconds AS SessionDurationInSeconds,
+	StartTimeOfNextSession AS StartTimeOfNextSession,
+	SessionTurnSequenceNumber AS SessionTurnSequenceNumber,
+	SessionTotalTurnCount,
+    CopilotProduct,
+    CopilotExtensionIds,
+    CopilotExtensionState,
+    LanguageMismatchType,
+    IsUpiaUserMessageTriggered,
+    IsXpiaToolOutputTriggered,
+    IsCopyrightViolationTriggered,
+    IsUserMessageBlockListTriggered,
+    IsBotResponseBlockListTriggered,
+    SearchStrategyClassification,
+    ClientAppVersion,
+    IsWorkSearchEnabled,
+    MyReaderHelper.FromCIQEntityTypesWithMetadataToString(CIQEntityTypesWithMetadata) AS CIQEntityTypesWithMetadata,
+    IsBotOffensiveClassifierTriggered,
+    MyReaderHelper.FromCounterfactualLoggingToString(CounterfactualLogging) AS CounterfactualLogging,
+    ReportLengthControl,
+    MyReaderHelper.FromArrayToString(PreProcessedExecutionControls) AS PreProcessedExecutionControls,
+    MyReaderHelper.FromArrayToString(FileSizeCategory) AS FileSizeCategory,
+    MyReaderHelper.FromArrayToString(FileHasImage) AS FileHasImage,
+
+    (string)null AS CopilotFeedbackData_FeedbackActionList,
+
+    #IF(@IncludeScores)
+    ScoreWithSlicerData_citedcg_avg_cited_label AS citedcg_avg_cited_label, 
+    ScoreWithSlicerData_citedcg_sum_cited_label AS citedcg_sum_cited_label, 
+    ScoreWithSlicerData_citedcg_num_bad_cites AS citedcg_num_bad_cites, 
+    ScoreWithSlicerData_citedcg_num_good_cites AS citedcg_num_good_cites, 
+    ScoreWithSlicerData_citedcg_num_enterprise_cites AS citedcg_num_enterprise_cites, 
+    ScoreWithSlicerData_citedcg_gcc AS citedcg_gcc, 
+    ScoreWithSlicerData_citedcg_one_centric AS citedcg_one_centric, 
+    ScoreWithSlicerData_citedcg_max_label AS citedcg_max_label, 
+    ScoreWithSlicerData_citedcg_all_bad_cites AS citedcg_all_bad_cites, 
+    ScoreWithSlicerData_citedcg_has_good_cite AS citedcg_has_good_cite, 
+    ScoreWithSlicerData_citedcg_all_bad_cites_v2 AS citedcg_all_bad_cites_v2, 
+    ScoreWithSlicerData_citedcg_has_good_cite_v2 AS citedcg_has_good_cite_v2, 
+    ScoreWithSlicerData_chatsat_overall_sat AS chatsat_overall_sat,
+    ScoreWithSlicerData_chatsat_overall_dsat AS chatsat_overall_dsat,
+    ScoreWithSlicerData_chatsat_intent_primary AS chatsat_intent_primary,
+    ScoreWithSlicerData_chatsat_intent_secondary AS chatsat_intent_secondary,
+    ScoreWithSlicerData_chatsat_intent_confidence AS chatsat_intent_confidence,
+    ScoreWithSlicerData_chatsat_sentiment_score AS chatsat_sentiment_score,
+    ScoreWithSlicerData_chatsat_sentiment_confidence AS chatsat_sentiment_confidence,
+    ScoreWithSlicerData_chatsat_signal_inferred_score AS chatsat_signal_inferred_score,
+    ScoreWithSlicerData_chatsat_signal_inferred_confidence AS chatsat_signal_inferred_confidence,
+    ScoreWithSlicerData_chatsat_signal_inferred_sat AS chatsat_signal_inferred_sat,
+    ScoreWithSlicerData_chatsat_signal_inferred_dsat AS chatsat_signal_inferred_dsat,
+    ScoreWithSlicerData_chatsat_signal_insights AS chatsat_signal_insights,
+    ScoreWithSlicerData_chatsat_signal_detected_scenario AS chatsat_signal_detected_scenario,
+    ScoreWithSlicerData_chatsat_signal_inferred_score_vnext AS chatsat_signal_inferred_score_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_confidence_vnext AS chatsat_signal_inferred_confidence_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_sat_vnext AS chatsat_signal_inferred_sat_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_dsat_vnext AS chatsat_signal_inferred_dsat_vnext,
+    ScoreWithSlicerData_chatsat_signal_insights_vnext AS chatsat_signal_insights_vnext,
+    ScoreWithSlicerData_chatsat_signal_detected_scenario_vnext AS chatsat_signal_detected_scenario_vnext,
+    ScoreWithSlicerData_chatsat_tc_relevance_score AS chatsat_tc_relevance_score,
+    ScoreWithSlicerData_chatsat_tc_relevance_confidence AS chatsat_tc_relevance_confidence,
+    ScoreWithSlicerData_chatsat_tc_contextual_score AS chatsat_tc_contextual_score,
+    ScoreWithSlicerData_chatsat_tc_contextual_confidence AS chatsat_tc_contextual_confidence,
+    ScoreWithSlicerData_chatsat_tc_completeness_score AS chatsat_tc_completeness_score,
+    ScoreWithSlicerData_chatsat_tc_completeness_confidence AS chatsat_tc_completeness_confidence,
+    ScoreWithSlicerData_chatsat_response_quality_score AS chatsat_response_quality_score,
+    ScoreWithSlicerData_chatsat_response_quality_confidence AS chatsat_response_quality_confidence,
+    ScoreWithSlicerData_chatsat_session_inferred_score AS chatsat_session_inferred_score,
+    ScoreWithSlicerData_chatsat_session_inferred_success AS chatsat_session_inferred_success,
+    ScoreWithSlicerData_chatsat_session_inferred_failure AS chatsat_session_inferred_failure,
+    ScoreWithSlicerData_chatsat_session_insights AS chatsat_session_insights,
+    ScoreWithSlicerData_chatsat_session_data_source AS chatsat_session_data_source,
+    ScoreWithSlicerData_EyesOffScoreSSR_OfficeRegion AS SSR_OfficeRegion,
+    ScoreWithSlicerData_EyesOffScoreChatSATS_OfficeRegion AS ChatSATS_OfficeRegion,
+    ScoreWithSlicerData_EyesOffScoreChatSAT_OfficeRegion AS ChatSAT_OfficeRegion,
+    ScoreWithSlicerData_UtteranceGroup AS UtteranceGroup,
+    ScoreWithSlicerData_UtteranceScenario AS UtteranceScenario,
+    ScoreWithSlicerData_UtteranceIntent AS UtteranceIntent,
+    ScoreWithSlicerData_IsSatisfied AS IDEAs_IsSatisfied,
+    ScoreWithSlicerData_IsDissatisfied AS IDEAs_IsDissatisfied,
+    #ELSEIF(@IncludeFastScores AND @ConsumptionMode.ToLower().Contains("hourly"))
+    (float?)null AS citedcg_avg_cited_label, 
+    (float?)null AS citedcg_sum_cited_label, 
+    (float?)null AS citedcg_num_bad_cites, 
+    (float?)null AS citedcg_num_good_cites, 
+    (float?)null AS citedcg_num_enterprise_cites, 
+    (float?)null AS citedcg_gcc, 
+    (float?)null AS citedcg_one_centric, 
+    (float?)null AS citedcg_max_label, 
+    (float?)null AS citedcg_all_bad_cites, 
+    (float?)null AS citedcg_has_good_cite, 
+    (float?)null AS citedcg_all_bad_cites_v2, 
+    (float?)null AS citedcg_has_good_cite_v2, 
+    (int?)null AS chatsat_overall_sat,
+    (int?)null AS chatsat_overall_dsat,
+    (string)null AS chatsat_intent_primary,
+    (string)null AS chatsat_intent_secondary,
+    (float?)null AS chatsat_intent_confidence,
+    (float?)null AS chatsat_sentiment_score,
+    (float?)null AS chatsat_sentiment_confidence,
+    (float?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_score AS chatsat_signal_inferred_score,
+    (float?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_confidence AS chatsat_signal_inferred_confidence,
+    (int?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_sat AS chatsat_signal_inferred_sat,
+    (int?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_dsat AS chatsat_signal_inferred_dsat,
+    (string) ScoreWithSlicerData_ChatSATS_chatsat_signal_insights AS chatsat_signal_insights,
+    (string) ScoreWithSlicerData_ChatSATS_chatsat_signal_detected_scenario AS chatsat_signal_detected_scenario,
+    (float?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_score_vnext AS chatsat_signal_inferred_score_vnext,
+    (float?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_confidence_vnext AS chatsat_signal_inferred_confidence_vnext,
+    (int?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_sat_vnext AS chatsat_signal_inferred_sat_vnext,
+    (int?) ScoreWithSlicerData_ChatSATS_chatsat_signal_inferred_dsat_vnext AS chatsat_signal_inferred_dsat_vnext,
+    (string) ScoreWithSlicerData_ChatSATS_chatsat_signal_insights_vnext AS chatsat_signal_insights_vnext,
+    (string) ScoreWithSlicerData_ChatSATS_chatsat_signal_detected_scenario_vnext AS chatsat_signal_detected_scenario_vnext,
+    (float?)null AS chatsat_tc_relevance_score,
+    (float?)null AS chatsat_tc_relevance_confidence,
+    (float?)null AS chatsat_tc_contextual_score,
+    (float?)null AS chatsat_tc_contextual_confidence,
+    (float?)null AS chatsat_tc_completeness_score,
+    (float?)null AS chatsat_tc_completeness_confidence,
+    (float?)null AS chatsat_response_quality_score,
+    (float?)null AS chatsat_response_quality_confidence,
+    (double?)null AS chatsat_session_inferred_score,
+    (int?)null AS chatsat_session_inferred_success,
+    (int?)null AS chatsat_session_inferred_failure,
+    (string)null AS chatsat_session_insights, 
+    (string)null AS chatsat_session_data_source,
+    (string)null AS SSR_OfficeRegion,
+    ScoreWithSlicerData_ChatSATS_OfficeRegion AS ChatSATS_OfficeRegion,
+    (string)null AS ChatSAT_OfficeRegion,
+    (string)null AS UtteranceGroup,
+    (string)null AS UtteranceScenario,
+    (string)null AS UtteranceIntent,
+    ScoreWithSlicerData_IsSatisfied AS IDEAs_IsSatisfied,
+    ScoreWithSlicerData_IsDissatisfied AS IDEAs_IsDissatisfied,
+    #ELSEIF(@IncludeFastScores)
+    (float?)null AS citedcg_avg_cited_label, 
+    (float?)null AS citedcg_sum_cited_label, 
+    (float?)null AS citedcg_num_bad_cites, 
+    (float?)null AS citedcg_num_good_cites, 
+    (float?)null AS citedcg_num_enterprise_cites, 
+    (float?)null AS citedcg_gcc, 
+    (float?)null AS citedcg_one_centric, 
+    (float?)null AS citedcg_max_label, 
+    (float?)null AS citedcg_all_bad_cites, 
+    (float?)null AS citedcg_has_good_cite, 
+    (float?)null AS citedcg_all_bad_cites_v2, 
+    (float?)null AS citedcg_has_good_cite_v2, 
+    (int?)null AS chatsat_overall_sat,
+    (int?)null AS chatsat_overall_dsat,
+    (string)null AS chatsat_intent_primary,
+    (string)null AS chatsat_intent_secondary,
+    (float?)null AS chatsat_intent_confidence,
+    (float?)null AS chatsat_sentiment_score,
+    (float?)null AS chatsat_sentiment_confidence,
+    ScoreWithSlicerData_chatsat_signal_inferred_score AS chatsat_signal_inferred_score,
+    ScoreWithSlicerData_chatsat_signal_inferred_confidence AS chatsat_signal_inferred_confidence,
+    ScoreWithSlicerData_chatsat_signal_inferred_sat AS chatsat_signal_inferred_sat,
+    ScoreWithSlicerData_chatsat_signal_inferred_dsat AS chatsat_signal_inferred_dsat,
+    ScoreWithSlicerData_chatsat_signal_insights AS chatsat_signal_insights,
+    ScoreWithSlicerData_chatsat_signal_detected_scenario AS chatsat_signal_detected_scenario,
+    ScoreWithSlicerData_chatsat_signal_inferred_score_vnext AS chatsat_signal_inferred_score_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_confidence_vnext AS chatsat_signal_inferred_confidence_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_sat_vnext AS chatsat_signal_inferred_sat_vnext,
+    ScoreWithSlicerData_chatsat_signal_inferred_dsat_vnext AS chatsat_signal_inferred_dsat_vnext,
+    ScoreWithSlicerData_chatsat_signal_insights_vnext AS chatsat_signal_insights_vnext,
+    ScoreWithSlicerData_chatsat_signal_detected_scenario_vnext AS chatsat_signal_detected_scenario_vnext,
+    (float?)null AS chatsat_tc_relevance_score,
+    (float?)null AS chatsat_tc_relevance_confidence,
+    (float?)null AS chatsat_tc_contextual_score,
+    (float?)null AS chatsat_tc_contextual_confidence,
+    (float?)null AS chatsat_tc_completeness_score,
+    (float?)null AS chatsat_tc_completeness_confidence,
+    (float?)null AS chatsat_response_quality_score,
+    (float?)null AS chatsat_response_quality_confidence,
+    (double?)null AS chatsat_session_inferred_score,
+    (int?)null AS chatsat_session_inferred_success,
+    (int?)null AS chatsat_session_inferred_failure,
+    (string)null AS chatsat_session_insights, 
+    (string)null AS chatsat_session_data_source,
+    (string)null AS SSR_OfficeRegion,
+    ScoreWithSlicerData_EyesOffScoreChatSATS_OfficeRegion AS ChatSATS_OfficeRegion,
+    (string)null AS ChatSAT_OfficeRegion,
+    (string)null AS UtteranceGroup,
+    (string)null AS UtteranceScenario,
+    (string)null AS UtteranceIntent,
+    ScoreWithSlicerData_IsSatisfied AS IDEAs_IsSatisfied,
+    ScoreWithSlicerData_IsDissatisfied AS IDEAs_IsDissatisfied,
+    #ELSE
+    (float?)null AS citedcg_avg_cited_label, 
+    (float?)null AS citedcg_sum_cited_label, 
+    (float?)null AS citedcg_num_bad_cites, 
+    (float?)null AS citedcg_num_good_cites, 
+    (float?)null AS citedcg_num_enterprise_cites, 
+    (float?)null AS citedcg_gcc, 
+    (float?)null AS citedcg_one_centric, 
+    (float?)null AS citedcg_max_label, 
+    (float?)null AS citedcg_all_bad_cites, 
+    (float?)null AS citedcg_has_good_cite, 
+    (float?)null AS citedcg_all_bad_cites_v2, 
+    (float?)null AS citedcg_has_good_cite_v2, 
+    (int?)null AS chatsat_overall_sat,
+    (int?)null AS chatsat_overall_dsat,
+    (string)null AS chatsat_intent_primary,
+    (string)null AS chatsat_intent_secondary,
+    (float?)null AS chatsat_intent_confidence,
+    (float?)null AS chatsat_sentiment_score,
+    (float?)null AS chatsat_sentiment_confidence,
+    (float?)null AS chatsat_signal_inferred_score,
+    (float?)null AS chatsat_signal_inferred_confidence,
+    (int?)null AS chatsat_signal_inferred_sat,
+    (int?)null AS chatsat_signal_inferred_dsat,
+    (string)null AS chatsat_signal_insights,
+    (string)null AS chatsat_signal_detected_scenario,
+    (float?)null AS chatsat_signal_inferred_score_vnext,
+    (float?)null AS chatsat_signal_inferred_confidence_vnext,
+    (int?)null AS chatsat_signal_inferred_sat_vnext,
+    (int?)null AS chatsat_signal_inferred_dsat_vnext,
+    (string)null AS chatsat_signal_insights_vnext,
+    (string)null AS chatsat_signal_detected_scenario_vnext,
+    (float?)null AS chatsat_tc_relevance_score,
+    (float?)null AS chatsat_tc_relevance_confidence,
+    (float?)null AS chatsat_tc_contextual_score,
+    (float?)null AS chatsat_tc_contextual_confidence,
+    (float?)null AS chatsat_tc_completeness_score,
+    (float?)null AS chatsat_tc_completeness_confidence,
+    (float?)null AS chatsat_response_quality_score,
+    (float?)null AS chatsat_response_quality_confidence,
+    (double?)null AS chatsat_session_inferred_score,
+    (int?)null AS chatsat_session_inferred_success,
+    (int?)null AS chatsat_session_inferred_failure,
+    (string)null AS chatsat_session_insights, 
+    (string)null AS chatsat_session_data_source,
+    (string)null AS SSR_OfficeRegion,
+    (string)null AS ChatSATS_OfficeRegion,
+    (string)null AS ChatSAT_OfficeRegion,
+    (string)null AS UtteranceGroup,
+    (string)null AS UtteranceScenario,
+    (string)null AS UtteranceIntent,
+    (string)null AS IDEAs_IsSatisfied,
+    (string)null AS IDEAs_IsDissatisfied,  
+    #ENDIF
+    ShadowTriggerFlights,
+    ShadowOverrideFlights,
+    FluxVersion,
+    OrchestratorName,
+    DeclaritiveCopilotExtendedData,
+    MessageAuthor,
+    MessageType,
+    FromHistory,
+    UserEngagementType AS TurnType,
+    OptionVariantsSet,
+    (string) null AS RequestPerfSegments,
+    (int?) null AS FluxLoopCount,
+    (int?) null AS ToolTriggerCount,
+    (int?) null AS ChatFirstTokenRenderedUnaccounted,
+    (int?) null AS SydneyFirstTokenResponseModelToFirstTokenResponse,
+    (int?) null AS SydneyFirstTokenResponseToLastTokenResponse,
+    (int?) null AS SydneyLLMFirstTokenLatency,
+    (int?) null AS SydneyLLMFirstTokenPreFirstTokenResponseModel,
+    (int?) null AS SydneyLLMFirstTokenPreFirstTokenResponse,
+    (int?) null AS SydneyLLMFirstTokenPostFirstTokenResponse,
+    (int?) null AS SydneyLLMFirstVisibleToken,
+    (int?) null AS SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel,
+    (int?) null AS SydneyLLMFirstVisibleTokenPreFirstTokenResponse,
+    (int?) null AS SydneyLLMFirstVisibleTokenPostFirstTokenResponse,
+    (int?) null AS SydneyLLMCriticalPathPreFirstTokenResponseModel,
+    (int?) null AS SydneyLLMCriticalPathPreFirstTokenResponseModel_R9,
+    (int?) null AS SydneyLLMCriticalPathPreFirstTokenResponse,
+    (int?) null AS SydneyLLMCriticalPathPostFirstTokenResponse,
+    (int?) null AS SydneyLLMRespondingTokenStream,
+    (int?) null AS SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel,
+    (int?) null AS SydneyLLMRespondingTokenStreamPreFirstTokenResponse,
+    (int?) null AS SydneyLLMRespondingTokenStreamPostFirstTokenResponse,
+    (int?) null AS SydneyLLMToolInvocationTokenStream,
+    (int?) null AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel,
+    (int?) null AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse,
+    (int?) null AS SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse,
+    (int?) null AS ModelCalls_InvokingFunction,
+    (int?) null AS ModelCalls_Responding,
+    (int?) null AS ModelCalls_InvokingFunction_Responding,
+    (int?) null AS ModelCalls,
+    (int?) null AS TotalLLMCalls,
+    (int?) null AS MessageCounts,
+    (int?) null AS LLMInputTokenInvokingFunction,
+    (int?) null AS LLMOutputTokenInvokingFunction,
+    (int?) null AS LLMInputTokenResponding,
+    (int?) null AS LLMOutputTokenResponding,
+    (int?) null AS LLMInputTokenInvokingFunction_Responding,
+    (int?) null AS LLMOutputTokenInvokingFunction_Responding,
+    (int?) null AS LLMInputToken,
+    (int?) null AS LLMOutputToken,
+    (int?) null AS LLMContextTokensIter1,
+	(int?) null AS LLMContextTokensIter2,
+	(int?) null AS LLMContextTokensIterGrt3,
+	(int?) null AS LLMUncachedContextTokensIter1,
+	(int?) null AS LLMUncachedContextTokensIter2,
+	(int?) null AS LLMUncachedContextTokensIterGrt3,
+	(int?) null AS LLMCachedContextTokensIter1,
+	(int?) null AS LLMCachedContextTokensIter2,
+	(int?) null AS LLMCachedContextTokensIterGrt3,
+	(double?) null AS LLMCacheHitRateIter1,
+	(double?) null AS LLMCacheHitRateIter2,
+	(double?) null AS LLMCacheHitRateIterGrt3,
+    (string) null AS LLMLatency,
+    (int?) null AS SearchPostFirstTokenReponse,
+    (int?) null AS SSS_Transcripts_Iter1,
+    (int?) null AS SSS_Transcripts_Iter2,
+    (int?) null AS SSS_Moments_Iter1,
+    (int?) null AS SSS_Moments_Iter2,
+    (int?) null AS SSS_Moments_RunAsync_Iter1,
+    (int?) null AS SSS_Moments_RunAsync_Iter2,
+    (int?) null AS SSS_Moments_RunAsync_MomentsContentProvider_Iter1,
+    (int?) null AS SSS_Moments_RunAsync_MomentsContentProvider_Iter2,
+    (int?) null AS SSS_Moments_RunAsync_MomentsProvider_Iter1,
+    (int?) null AS SSS_Moments_RunAsync_MomentsProvider_Iter2,
+    (int?) null AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1,
+    (int?) null AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2,
+    UPLTLatency != null && UPLTLatency.Count != 0 && UPLTLatency.ContainsField("Uplt") ? UPLTLatency.GetField<int?>("Uplt") : (int?) null AS UserPerceivedLoadTime,
+    UPLTLatency != null && UPLTLatency.Count != 0 && UPLTLatency.ContainsField("InputPaint") ? UPLTLatency.GetField<int?>("InputPaint") : (int?) null AS InputPaint,
+    UPLTLatency != null && UPLTLatency.Count != 0 && UPLTLatency.ContainsField("MetaOsLoad") ? UPLTLatency.GetField<int?>("MetaOsLoad") : (int?) null AS MetaOsLoad,
+    UPLTLatency != null && UPLTLatency.Count != 0 && UPLTLatency.ContainsField("SessionsPaint") ? UPLTLatency.GetField<int?>("SessionsPaint") : (int?) null AS SessionsPaint,
+    UPLTLatency != null && UPLTLatency.Count != 0 && UPLTLatency.ContainsField("ZqPaint") ? UPLTLatency.GetField<int?>("ZqPaint") : (int?) null AS ZqPaint,
+    LuClassification,
+    ChatMode,
+    RealtimeConnectionResult != null && RealtimeConnectionResult.Count != 0 && RealtimeConnectionResult.ContainsField("ConnectionDurationInMs") ? RealtimeConnectionResult.GetField<int?>("ConnectionDurationInMs") : (int?) null AS RealTimeConnection_DurationInMs,
+    RealtimeConnectionResult != null && RealtimeConnectionResult.Count != 0 && RealtimeConnectionResult.ContainsField("ConnectionSetupLatencyInMs") ? RealtimeConnectionResult.GetField<int?>("ConnectionSetupLatencyInMs") : (int?) null AS RealTimeConnection_SetupLatencyInMs,
+    RealtimeConnectionResult != null && RealtimeConnectionResult.Count != 0 && RealtimeConnectionResult.ContainsField("Status") ? RealtimeConnectionResult.GetField<string>("Status") : (string) null AS RealTimeConnection_Status,
+    // TODO: figure out if we can serialize CUD STRUCTs to JSON without explicitly defining the schema...
+    ExtensionExecutionFlow != null && ExtensionExecutionFlow.Count != 0 ? String.Join(",", ExtensionExecutionFlow.Select(x => x.Count != 0 && x.ContainsField("ExtensionName") ? x.GetField<string>("ExtensionName") : (string)null).Where(s => s != (string)null).ToArray()) : (string)null AS ExtensionExecutionFlow_ExtensionNames,
+    ExtensionExecutionFlow != null && ExtensionExecutionFlow.Count != 0 ? String.Join(",", ExtensionExecutionFlow.Select(x => x.Count != 0 && x.ContainsField("ExtensionOutCome") ? x.GetField<string>("ExtensionOutCome") : (string)null).Where(s => s != (string)null).ToArray()) : (string)null AS ExtensionExecutionFlow_ExtensionOutcomes,
+    ExtensionExecutionFlow != null && ExtensionExecutionFlow.Count != 0 ? String.Join(",", ExtensionExecutionFlow.Select(x => x.Count != 0 && x.ContainsField("TimeStamp") ? x.GetField<string>("TimeStamp") : (string)null).Where(s => s != (string)null).ToArray()) : (string)null AS ExtensionExecutionFlow_Timestamps,
+    ClientInformation != null && ClientInformation.Count != 0 && ClientInformation.ContainsField("DeviceOS") ? ClientInformation.GetField<string>("DeviceOS") : (string)null AS ClientInformation_DeviceOS,
+    ClientInformation != null && ClientInformation.Count != 0 && ClientInformation.ContainsField("DeviceType") ? ClientInformation.GetField<string>("DeviceType") : (string)null AS ClientInformation_DeviceType,
+    UserIdPUID,
+    DWD_DIM_Mapping_Endpoint.Get_DIM_EndpointLevel1(AppName, Product, AppFlavor, ClientPlatform, Scenario, "") AS EndpointL1,
+    DWD_DIM_Mapping_Endpoint.Get_DIM_EndpointLevel2(AppName, Product, AppFlavor, ClientPlatform, Scenario, "") AS EndpointL2,
+    MyReaderHelper.FromCustomInstructionUpsertResultStructToString(CustomInstructionUpsertResult) AS CustomInstructionUpsertResult,
+    MyReaderHelper.FromPersonalizationSettingsStructArrayToString(PersonalizationSettings) AS PersonalizationSettings,
+    MyReaderHelper.FromSkdsMetricsStructArrayToString(SkdsMetrics) AS SkdsMetrics,
+    MyReaderHelper.FromSSSRequestStructArrayToString(SSSRequests) AS SSSRequests,
+    MyReaderHelper.GetSydneyLatency(SydneyLatency) AS SydneyLatency,
+    MyReaderHelper.GetMeteringCheckResponse(MeteringCheckResponse) AS MeteringCheckResponse,
+    MyReaderHelper.GetClientLatency(ClientLatency) AS ClientLatency,
+    MyReaderHelper.FromChatPlusPagesStructArrayToString(ChatPlusPages) AS ChatPlusPages,
+    MyReaderHelper.FromClientInformationStructToString(ClientInformation) AS ClientInformation,
+    MyReaderHelper.FromLLMRequestsStructArrayToString(LLMRequests) AS LLMRequests,
+    MyReaderHelper.FromBingRequestsToString(BingRequests) AS BingRequests,
+    MyReaderHelper.FromProductInformationStructToString(ProductInformation) AS ProductInformation,
+    DeclaritiveCopilotExtendedData AS AgentExtendedData,
+    MyReaderHelper.FromToolExecutionDetailsToString(ToolExecutionDetails) AS ToolExecutionDetails,
+    MyReaderHelper.FromRaiPoliciesConfigurationStructToString(RaiPoliciesConfiguration) AS RaiPoliciesConfiguration,
+    SafetyRouterTriggered,
+    // If server sessions are requested and the scorecard is not passive, use ComputedServerSessionId; otherwise use ClientSessionId.
+    // Both session modifiers populate the computed ID, while the CUD view selects SStream vs cutoff-split Parquet.
+    @FilterPassiveUsers && @ConsumptionMode.ToUpperInvariant().Contains("INCLUDESERVERSESSIONID") ? ComputedServerSessionId : ClientSessionId AS ScorecardSessionId,
+    FromCode,
+    FileExtensions,
+    MyReaderHelper.FromIntentSegmentationArrayToString(IntentSegmentation) AS IntentSegmentation,
+    MyReaderHelper.FromR9LatencyStructToString(R9Latency) AS R9Latency,
+    IsAgentRuntime,
+    AgentRuntime,
+    PluginInvocations,
+    Tone,
+    MyReaderHelper.FromRealtimeTurnResultStructToString(RealtimeTurnResult) AS RealtimeTurnResult,
+    MyReaderHelper.FromFeedbackThumbsClicksStructToString(FeedbackThumbsClicks) AS FeedbackThumbsClicks,
+    MyReaderHelper.FromClientPreferencesStructToString(ClientPreferences) AS ClientPreferences,
+    MyReaderHelper.FromRealtimeTurnPlaybackInterruptionStructToString(RealtimeTurnPlaybackInterruption) AS RealtimeTurnPlaybackInterruption,
+    MyReaderHelper.FromOfficeCopilotStructToString(OfficeCopilot) AS OfficeCopilot,
+    MyReaderHelper.FromRAIClassifiersTriggeredStructToString(RAIClassifiersTriggered) AS RAIClassifiersTriggered,
+    MyReaderHelper.FromAgentExtendedDataArrayToString(AgentExtendedData) AS AgentExtendedDataArray,
+    MyReaderHelper.FromArrayToString(Apis) AS Apis,
+    IsDegradedResponse,
+    MyReaderHelper.FromDataverseRequestsToString(DataverseRequests) AS DataverseRequests,
+    MyReaderHelper.FromArrayToString(SpawnedTaskIds) AS SpawnedTaskIds,
+    MyReaderHelper.FromVisualInsightsDataStructToString(VisualInsightsData) AS VisualInsightsData,
+    DatasetCategory,
+    MyReaderHelper.FromBackgroundTaskDataStructToString(BackgroundTaskData) AS BackgroundTaskData,
+    BackgroundTaskData IS NOT NULL ? BackgroundTaskData.TaskId : NULL AS TaskId,
+    MyReaderHelper.FromLLMGroundingEntitiesToString(LLMGroundingEntities) AS LLMGroundingEntities,
+    ReflectionMetricsStringMap,
+    MyReaderHelper.FromImageSourceBreakdownStructToString(ImageSourceBreakdown) AS ImageSourceBreakdown,
+    MyReaderHelper.FromEditableBlockGeneratedStructArrayToString(EditableBlockGenerated) AS EditableBlockGenerated,
+    MyReaderHelper.FromMessageStreamingMetricsExecutionEventStructToString(MessageStreamingMetricsExecutionEvent) AS MessageStreamingMetricsExecutionEvent,
+    MyReaderHelper.FromSkillsInfoStructArrayToString(SkillsInfo) AS SkillsInfo,
+    ShoppingBerryForwardedProductCount,
+    MyReaderHelper.FromCuaPluginInfoStructArrayToString(CuaPluginInfo) AS CuaPluginInfo,
+    LLMRequests AS LLMRequestsArray
+
+    WHERE
+        (RequestTime.HasValue AND IsDevMode != true)
+        AND (IsTestTraffic != true OR (IsTestTraffic == true AND IsEchoTraffic == true))
+#IF(@IsEchoExperiment == false)
+        AND (IsEchoTraffic != true)
+#ENDIF
+    FROM data;
+
+data = SELECT *
+    #IF(@FilterPassiveUsers)
+    WHERE 
+        #IF(@ExtraOptions.Contains("IncludeAsyncTask"))
+        (TurnType == "Active" || TurnType == "FromHistory" || TurnType == "AsyncTask")
+        #ELSEIF(@IncludeFromHistoryTurns)
+        (TurnType == "Active" || TurnType == "FromHistory")
+        #ELSE
+        (TurnType == "Active")
+        #ENDIF
+        && !string.IsNullOrEmpty(CorrelationId)
+        && !string.IsNullOrEmpty(ObjectId)
+        && !string.IsNullOrEmpty(BotConversationId)
+        && !string.IsNullOrEmpty(Scenario)
+        && !string.IsNullOrEmpty(Product)
+        && !string.IsNullOrEmpty(AppName)
+    #ENDIF
+    FROM data;
+
+#IF(@IncludeFromHistoryTurns)
+    history_data = SELECT 
+        TurnLevelCorrelationId,
+        !string.IsNullOrEmpty(TurnLevelResponseActionsString) ? TurnLevelResponseActionsString : "" AS TurnLevelResponseActionsString,
+        !string.IsNullOrEmpty(TurnLevelSystemActionsString) ? TurnLevelSystemActionsString : "" AS TurnLevelSystemActionsString,
+        (string)null AS CopilotFeedbackData_FeedbackActionList
+        FROM data
+        WHERE (TurnType == "FromHistory")
+        AND !string.IsNullOrEmpty(TurnLevelCorrelationId);
+#ENDIF
+
+// Filter out sidepane scenarios if we're not joining to catalyst
+#IF(@TreatmentAssignmentDataSource != "ideas" && !@IncludeCatalystTraffic)
+    data = SELECT * FROM data
+    WHERE !Scenario.ToLower().Contains("sidepane");
+#ENDIF
+
+#IF(@CopilotProductFilter != "")
+    data = SELECT * FROM data
+    WHERE CopilotProduct.ToLower() == @CopilotProductFilter.ToLower();
+#ENDIF
+
+#IF(@IncludeFromHistoryTurns)
+    active_data = SELECT * FROM data
+        WHERE (TurnType == "Active" || TurnType == "AsyncTask");
+    
+    history_data = SELECT
+        TurnLevelCorrelationId,
+        string.Join(";" , LIST(TurnLevelResponseActionsString)) AS FromHistory_TurnLevelResponseActionsString,
+        string.Join(";" , LIST(TurnLevelSystemActionsString)) AS FromHistory_TurnLevelSystemActionsString,
+        (int)COUNT() AS FromHistory_TurnCount
+        FROM history_data
+        GROUP BY TurnLevelCorrelationId;
+    
+    data = SELECT
+        data.*.Except(TurnLevelResponseActionsString,TurnLevelSystemActionsString),
+        #IF(@ExtraOptions.Contains("MergeResponseActionList"))
+        MyReaderHelper.MergeActionLists(data.TurnLevelResponseActionsString, history_data.FromHistory_TurnLevelResponseActionsString) AS TurnLevelResponseActionsString,
+        #ELSE
+        TurnLevelResponseActionsString,
+        #ENDIF
+        #IF(@ExtraOptions.Contains("MergeSystemActionList"))
+        MyReaderHelper.MergeActionLists(data.TurnLevelSystemActionsString, history_data.FromHistory_TurnLevelSystemActionsString) AS TurnLevelSystemActionsString,
+        #ELSE
+        TurnLevelSystemActionsString,
+        #ENDIF
+        history_data.FromHistory_TurnLevelResponseActionsString,
+        history_data.FromHistory_TurnLevelSystemActionsString,
+        (string)null AS FromHistory_FeedbackActionList,
+        history_data.FromHistory_TurnCount
+        FROM active_data AS data
+        LEFT JOIN history_data ON history_data.TurnLevelCorrelationId == data.TurnLevelCorrelationId;
+#ELSE
+    data = SELECT *,
+            (string)null AS FromHistory_TurnLevelResponseActionsString,
+            (string)null AS FromHistory_TurnLevelSystemActionsString,
+            (string)null AS FromHistory_FeedbackActionList,
+            (int?)null AS FromHistory_TurnCount
+           FROM data;
+#ENDIF
+
+#IF((@TreatmentAssignmentDataSource == "ideas"  || @Variant3SFlightOverride)) 
+    // potentially map oid to useridpuid for both IDEAs and Variant3SFlightOverride
+     #IF (!@FilterPassiveUsers)
+        // Map Oid to UserIdPUID for Passive Users
+        #DECLARE IDEAsCommercialUserProfile_path string = "/shares/IDEAs.Prod.Data/Publish.Profiles.User.Commercial.IDEAsCommercialUserProfile/Views/v3/IDEAsCommercialUserProfile.view";
+    
+         #IF (@Region.ToLower() == "eu")
+            #SET IDEAsCommercialUserProfile_path = "abfss://shares@ideasneuprodsharetorus.dfs.core.windows.net/Publish.Profiles.User.Commercial.IDEAsCommercialUserProfile/link/Views/v3/IDEAsCommercialUserProfile.view";
+         #ENDIF
+ 
+        ideasUsers =
+            SELECT
+                UserObjectId,
+                OrgIdPUIDHex
+            FROM
+            (
+                VIEW @IDEAsCommercialUserProfile_path
+                PARAMS
+                (
+                    HistoryDate = DateTime.Parse(@StartDateTime)
+                )
+            );
+
+        data = 
+            SELECT
+                data.*,
+                ideasUsers.OrgIdPUIDHex.ToLower() AS UserIdPuid_Lower
+            FROM data
+            INNER JOIN ideasUsers ON ideasUsers.UserObjectId == data.ObjectId;
+    #ELSE 
+
+    data = 
+        SELECT *,
+        data.UserIdPUID.ToLower() AS UserIdPuid_Lower
+        FROM data
+        WHERE !string.IsNullOrEmpty(data.UserIdPUID);
+    #ENDIF
+#ENDIF
+
+#IF(@TreatmentAssignmentDataSource == "3sflight" && @Variant3SFlightOverride)
+
+    #DECLARE flightVariantConfigViewPath string = "/shares/exchange.storage.prod/local/Projects/DataInsight/Views/VariantConfig/FlightVariantConfigView.view";
+    #IF (@Region.ToLower() == "eu")
+        #SET flightVariantConfigViewPath = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/Views/VariantConfig/FlightVariantConfigView.view";
+    #ENDIF
+    
+    // commercial 
+
+    commercialTreatmentAssignment =
+        SELECT 
+            Office365Category,
+            UserId AS ExperimentalUnitId,
+            Flights,
+            OMSTenantId,
+            (DateTime?)null AS StreamDate
+        FROM
+        (
+            VIEW @flightVariantConfigViewPath
+            PARAMS
+            (
+                StartTime = DateTime.Parse(@StartDateTime).ToString("yyyy-MM-dd"),
+                EndTime = DateTime.Parse(@EndDateTime).ToString("yyyy-MM-dd"),
+                Office365Instance = "worldwide",
+                FlightList = @Flights.ToUpper(),
+                Category = "Commercial",
+                AppId = "Search",
+                Region = @Region.ToUpper()
+            )
+        );
+
+    // Filter out empty user Ids and users with > 1 flight
+    commercialTreatmentAssignment =
+        SELECT 
+            *.Except(Flights),
+            Flights.GroupBy(x => x.FlightName).Select(x => new System.Collections.Generic.KeyValuePair<string, DateTime>(x.Key, x.Select(f => f.MinTime).Min())).ToList() AS Flights
+        FROM commercialTreatmentAssignment;
+
+    commercialTreatmentAssignment =
+        SELECT 
+            Office365Category,
+            ExperimentalUnitId,
+            Flights[0].Key AS Flight,
+            OMSTenantId,
+            ((DateTime?)Flights[0].Value) AS Timestamp,
+            StreamDate
+        FROM commercialTreatmentAssignment
+        WHERE(NOT String.IsNullOrEmpty(ExperimentalUnitId)) AND Flights.Count == 1;
+
+    commercialTreatmentAssignment =
+        SELECT 
+            *.Except(StreamDate),
+            IF(StreamDate == null && Timestamp != null, (DateTime?)Timestamp, (DateTime?)StreamDate) AS StreamDate
+    FROM commercialTreatmentAssignment;
+        
+    commercialTreatmentAssignment = SELECT *,
+                    ExperimentalUnitId.ToLower() AS ExperimentalUnitId_Lower
+                    FROM commercialTreatmentAssignment;
+
+    commercialData =
+        SELECT
+            data.*,
+            commercialTreatmentAssignment.Flight AS VariantFlights,
+            commercialTreatmentAssignment.Timestamp.Value.AddSeconds(-1) AS FlightFirstSeen
+        FROM commercialTreatmentAssignment
+        INNER HASH JOIN data ON (commercialTreatmentAssignment.ExperimentalUnitId_Lower == data.UserIdPuid_Lower AND commercialTreatmentAssignment.OMSTenantId == data.TenantId)
+        WHERE commercialTreatmentAssignment.Timestamp.HasValue && data.DatasetCategory != "consumer"
+        HAVING TIMESTAMP >= FlightFirstSeen;
+
+    // consumer
+
+       consumerTreatmentAssignment =
+        SELECT 
+            Office365Category,
+            UserId AS ExperimentalUnitId,
+            Flights,
+            OMSTenantId,
+            (DateTime?)null AS StreamDate
+        FROM
+        (
+            VIEW @flightVariantConfigViewPath
+            PARAMS
+            (
+                StartTime = DateTime.Parse(@StartDateTime).ToString("yyyy-MM-dd"),
+                EndTime = DateTime.Parse(@EndDateTime).ToString("yyyy-MM-dd"),
+                Office365Instance = "worldwide",
+                FlightList = @Flights.ToUpper(),
+                Category = "Consumer",
+                AppId = "Search",
+                Region = @Region.ToUpper()
+            )
+        );
+
+    // Filter out empty user Ids and users with > 1 flight
+    consumerTreatmentAssignment =
+        SELECT 
+            *.Except(Flights),
+            Flights.GroupBy(x => x.FlightName).Select(x => new System.Collections.Generic.KeyValuePair<string, DateTime>(x.Key, x.Select(f => f.MinTime).Min())).ToList() AS Flights
+        FROM consumerTreatmentAssignment;
+
+    consumerTreatmentAssignment =
+        SELECT 
+            Office365Category,
+            ExperimentalUnitId,
+            Flights[0].Key AS Flight,
+            OMSTenantId,
+            ((DateTime?)Flights[0].Value) AS Timestamp,
+            StreamDate
+        FROM consumerTreatmentAssignment
+        WHERE(NOT String.IsNullOrEmpty(ExperimentalUnitId)) AND Flights.Count == 1;
+
+    consumerTreatmentAssignment = SELECT 
+            *.Except(StreamDate),
+            IF(StreamDate == null && Timestamp != null, (DateTime?)Timestamp, (DateTime?)StreamDate) AS StreamDate
+    FROM consumerTreatmentAssignment;
+        
+    consumerTreatmentAssignment = SELECT *,
+                    ExperimentalUnitId.ToLower() AS ExperimentalUnitId_Lower
+                    FROM consumerTreatmentAssignment;
+
+    consumerData =
+        SELECT
+            data.*,
+            consumerTreatmentAssignment.Flight AS VariantFlights,
+            consumerTreatmentAssignment.Timestamp.Value.AddSeconds(-1) AS FlightFirstSeen
+        FROM consumerTreatmentAssignment
+        INNER JOIN data ON (consumerTreatmentAssignment.ExperimentalUnitId_Lower == data.UserIdPuid_Lower)
+        WHERE consumerTreatmentAssignment.Timestamp.HasValue && data.DatasetCategory != "commercial"
+        HAVING TIMESTAMP >= FlightFirstSeen;
+
+    // union (UNION ALL: commercial/consumer branches are disjoint, and UNION dedup fails on the MAP<string,string> ReflectionMetricsStringMap column)
+    data = SELECT *.Except(sssFlights, VariantFlights,FlightFirstSeen, UserIdPuid_Lower), VariantFlights AS sssFlights FROM commercialData
+              UNION ALL
+            SELECT *.Except(sssFlights, VariantFlights,FlightFirstSeen, UserIdPuid_Lower), VariantFlights AS sssFlights FROM consumerData;
+
+#ENDIF
+
+#IF(@TreatmentAssignmentDataSource == "ideas" )
+
+    #IF(EXISTS("/shares/IDEAs.Prod.Data/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view"))
+        #DECLARE OrgIdPuidFlightMappingView string = "/shares/IDEAs.Prod.Data/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view";
+    #ELSE
+       #DECLARE OrgIdPuidFlightMappingView string = "/shares/IDEAs.Prod.Data/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view"; 
+    #ENDIF
+    
+    #IF (@Region.ToLower() == "eu")
+        #IF(EXISTS("abfss://assets@ideasneuproddata.dfs.core.windows.net/local/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view"))
+            #SET OrgIdPuidFlightMappingView = "abfss://assets@ideasneuproddata.dfs.core.windows.net/local/Publish/Acquisitions/User/Commercial/Experimentation/UserFlights/OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view";
+        #ELSEIF(EXISTS("abfss://assets@ideasneuproddata.dfs.core.windows.net/local/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view"))
+            #SET OrgIdPuidFlightMappingView = "abfss://assets@ideasneuproddata.dfs.core.windows.net/local/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/Views/v1/OrgIdPuidFlightMapping.view";
+        #ELSE
+            #SET OrgIdPuidFlightMappingView = "abfss://shares@ideasneuprodsharetorus.dfs.core.windows.net/Publish.Acquisitions.User.Commercial.Experimentation.UserFlights.OrgIdPuidFlightMapping/link/Views/v1/OrgIdPuidFlightMapping.view";
+        #ENDIF
+    #ENDIF
+
+    treatmentAssignment = 
+        SELECT OrgIdPUID.ToLower() AS OrgIdPuid_Lower,
+        FlightId.ToUpper() AS FlightId
+        FROM 
+        (
+            VIEW @OrgIdPuidFlightMappingView
+            PARAMS
+            (
+                StartTime =  DateTime.Parse(@StartDateTime),
+                EndTime = DateTime.Parse(@EndDateTime).AddMinutes(1), // Add a minute to the end time to keep date in IDEAs
+                TelemetrySource = @IdeasTelemetrySource
+            )
+        )
+        WHERE !string.IsNullOrEmpty(OrgIdPUID) AND !string.IsNullOrEmpty(FlightId);
+
+    data = SELECT 
+        data.*.Except(UserIdPuid_Lower), 
+        treatmentAssignment.FlightId AS VariantFlights
+    FROM treatmentAssignment
+    INNER JOIN data ON treatmentAssignment.OrgIdPuid_Lower == data.UserIdPuid_Lower;
+
+    data = SELECT *.Except(VariantFlights), VariantFlights AS IdeasFlights FROM data;
+
+#ENDIF
+
+
+// output each full flight stream as flight
+data = SELECT 
+    #IF(@TreatmentAssignmentDataSource == "ideas")
+        *.Except(IdeasFlights),
+    #ELSE
+        *,
+    #ENDIF
+    #IF(@TreatmentAssignmentDataSource == "3sflight") 
+        sssFlights AS Flight
+    #ELSEIF(@TreatmentAssignmentDataSource == "clientflight")
+        ClientFlights AS Flight
+    #ELSEIF(@TreatmentAssignmentDataSource == "ideas")
+        IdeasFlights AS Flight
+    #ELSE
+        SydFlights AS Flight
+    #ENDIF
+FROM data;
+
+// deal with default 3S flight stream in CUD not having allocation ids
+#IF( @Variant3SFlightOverride != true && @TreatmentAssignmentDataSource == "3sflight")
+    // intersect stripped flight parameter with 3S flights in data
+    data = SELECT 
+    *.Except(Flight),
+    @Flights.ToUpper().Split('|').Intersect(
+        !string.IsNullOrEmpty(sssFlights) ? sssFlights.ToUpper().Split(',') : new string[0]
+    ).Count() == 1 ? @Flights.ToUpper().Split('|').Intersect(sssFlights.ToUpper().Split(',')).First() : "" AS Flight
+    FROM data;
+
+#ENDIF
+
+// ManagementGroup specific filtering
+#IF(@ManagementGroup == "m365chatclient" || @MetaOSFilter)
+    // ToDo: get rid of this and add as parameter for ScenarioListFilter in metaos override
+    data = SELECT * FROM data WHERE AppName.ToLower() == "m365chatclient";
+#ELSEIF(@ManagementGroup == "unionocmclient")
+    data = SELECT * FROM data WHERE Scenario.StartsWith("unionocm", StringComparison.OrdinalIgnoreCase);
+#ELSEIF(@ManagementGroup == "outlookmobile")
+    data = SELECT * FROM data WHERE Scenario.StartsWith("outlookmobile", StringComparison.OrdinalIgnoreCase);
+#ELSEIF(@ManagementGroup == "teamsmobile")
+    data = SELECT * FROM data WHERE Scenario.StartsWith("teams", StringComparison.OrdinalIgnoreCase) AND (!string.IsNullOrEmpty(ClientPlatform) && ClientPlatform.ToLower() IN ("ios", "android"));
+#ENDIF
+
+// ScenarioFilter: pipe-separated scenario prefixes
+#IF(!string.IsNullOrEmpty(@ScenarioFilter))
+    data = SELECT * FROM data
+    WHERE @ScenarioFilter.Split('|').Any(prefix => Scenario.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+#ENDIF
+
+// MobileFilter: restrict to mobile clients
+#IF(@MobileFilter == "true")
+    data = SELECT * FROM data
+    WHERE !string.IsNullOrEmpty(ClientPlatform) && ClientPlatform.ToLower() IN ("ios", "android");
+#ENDIF
+
+// If a user is on the flight on any turn, include all their turns
+#IF (@PropagateFlightToAllTurns)
+
+    // Get userid, min timestamp, and max flight, group by user
+    OidFlightInfo=
+    SELECT
+        ObjectId,
+        MAX(Flight) AS Flight,
+        MIN(TIMESTAMP) AS MinTimestampForFlightAssigned
+    FROM
+        data
+    WHERE !string.IsNullOrEmpty(Flight)
+    GROUP BY
+        ObjectId;
+
+    data =
+        SELECT
+            data.*.Except(Flight),
+            OidFlightInfo.Flight AS Flight
+        FROM
+            data
+        LEFT JOIN
+            OidFlightInfo
+        ON
+            data.ObjectId == OidFlightInfo.ObjectId
+        #IF (@DateTimeFilter)
+        WHERE DateTime.Compare(MinTimestampForFlightAssigned.GetValueOrDefault(), TIMESTAMP) <= 0
+        #ENDIF
+    ;
+#ENDIF
+
+// SHADOW EXPERIMENT LOGIC - Dependent on IsEchoTraffic = true AND presence of ShadowOverrideFlights
+#IF(@IsEchoExperiment)
+
+    data = SELECT *.Except(ChatFirstTokenRenderedUnaccounted, SydneyFirstTokenResponseModelToFirstTokenResponse,
+                           SydneyFirstTokenResponseToLastTokenResponse, 
+                           SydneyLLMFirstTokenPostFirstTokenResponse, SydneyLLMFirstVisibleToken, SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel,
+                           SydneyLLMFirstVisibleTokenPreFirstTokenResponse, SydneyLLMFirstVisibleTokenPostFirstTokenResponse,    
+                           SydneyLLMCriticalPathPostFirstTokenResponse, SydneyLLMRespondingTokenStream, SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel,
+                           SydneyLLMRespondingTokenStreamPreFirstTokenResponse, SydneyLLMRespondingTokenStreamPostFirstTokenResponse,
+                           SydneyLLMToolInvocationTokenStream, SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel,
+                           SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse, SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse,
+                           
+                           SearchPostFirstTokenReponse, SSS_Transcripts_Iter1, SSS_Transcripts_Iter2, SSS_Moments_Iter1, SSS_Moments_Iter2,
+                           SSS_Moments_RunAsync_Iter1, SSS_Moments_RunAsync_Iter2, SSS_Moments_RunAsync_MomentsContentProvider_Iter1,
+                           SSS_Moments_RunAsync_MomentsContentProvider_Iter2, SSS_Moments_RunAsync_MomentsProvider_Iter1,
+                           SSS_Moments_RunAsync_MomentsProvider_Iter2, SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1,
+                           SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2, UserPerceivedLoadTime, InputPaint, MetaOsLoad, SessionsPaint, ZqPaint)
+            FROM data;
+
+    data = SELECT *.Except(Flight),
+        @Flights.ToUpper().Split('|').Intersect(
+                !string.IsNullOrEmpty(ShadowOverrideFlights) ? ShadowOverrideFlights.ToUpper().Split(',') : new string[0]
+            ).Count() == 1 ? @Flights.ToUpper().Split('|').Intersect(ShadowOverrideFlights.ToUpper().Split(',')).First() : "" AS Flight    
+    FROM data;
+
+    // Complex SCOPE types cannot participate in SELECT DISTINCT, so remove the typed array and serialize the map for echo processing.
+    data =
+        SELECT *.Except(ReflectionMetricsStringMap, LLMRequestsArray),
+               MyReaderHelper.SerializeReflectionMetrics(ReflectionMetricsStringMap) AS ReflectionMetricsStringMapJson
+        FROM data;
+
+    EchoTraffic1 = SELECT DISTINCT *, CorrelationId.Substring(0, CorrelationId.IndexOf(":") >= 0 ? CorrelationId.IndexOf(":") : CorrelationId.Length) AS EchoCorrelationId
+            FROM data WHERE !string.IsNullOrEmpty(Flight) AND Flight.ToUpper().Contains("DOUBLEFORKCONTROL");
+
+    EchoTraffic2 = SELECT DISTINCT *, CorrelationId.Substring(0, CorrelationId.IndexOf(":") >= 0 ? CorrelationId.IndexOf(":") : CorrelationId.Length) AS EchoCorrelationId
+            FROM data WHERE !string.IsNullOrEmpty(Flight) AND Flight.ToUpper().Contains("DOUBLEFORKTREATMENT");
+
+    EchoTraffic12 = SELECT EchoTraffic1.*.Except(EchoCorrelationId,IsEchoTraffic),
+            EchoTraffic1.IsEchoTraffic, 
+            // PAIRED COLUMNS
+            (string.IsNullOrEmpty(EchoTraffic1.NoApologyDetectedState) ? (double?)null : 0) AS Shadow_E2ENRR,
+            (string.IsNullOrEmpty(EchoTraffic1.AvailabilityState) ? (double?)null : 0) AS Shadow_Availability,             
+            0.0 AS Shadow_ChatFCFRExcludesSameValueBetweenProdAndEcho,             
+            IF(EchoTraffic1.SydneyFCFR_R9 != NULL, 0, EchoTraffic1.SydneyFCFR_R9) AS Shadow_SydneyFCFR,
+            IF(EchoTraffic1.SydneyFCFR_R9 == NULL || EchoTraffic2.SydneyFCFR_R9 == NULL, 1, 0) AS Shadow_SydneyFCFR_NullFlag,                         
+            IF(EchoTraffic1.ChatFCFR_R9 != NULL, 0, EchoTraffic1.ChatFCFR_R9) AS Shadow_ChatFCFR,
+            IF(EchoTraffic1.ChatFCFR_R9 == NULL || EchoTraffic2.ChatFCFR_R9 == NULL, 1, 0) AS Shadow_ChatFCFR_NullFlag,             
+            IF(EchoTraffic1.LLMReason != NULL, 0, EchoTraffic1.LLMReason) AS Shadow_LLMReason,   
+            IF(EchoTraffic1.LLMReason == NULL || EchoTraffic2.LLMReason == NULL, 1, 0) AS Shadow_LLMReason_NullFlag,            
+            IF(EchoTraffic1.LLMReasonResponse != NULL, 0, EchoTraffic1.LLMReasonResponse) AS Shadow_LLMReasonResponse,             
+            IF(EchoTraffic1.LLMReasonResponse == NULL || EchoTraffic2.LLMReasonResponse == NULL, 1, 0) AS Shadow_LLMReasonResponse_NullFlag,
+            IF(EchoTraffic1.LLMReasonUserQuery != NULL, 0, EchoTraffic1.LLMReasonUserQuery) AS Shadow_LLMReasonUserQuery,               
+            IF(EchoTraffic1.LLMReasonUserQuery == NULL || EchoTraffic2.LLMReasonUserQuery == NULL, 1, 0) AS Shadow_LLMReasonUserQuery_NullFlag,
+            IF(EchoTraffic1.LLMResponse_FirstToken != NULL, 0, EchoTraffic1.LLMResponse_FirstToken) AS Shadow_LLMResponse_FirstToken,             
+            IF(EchoTraffic1.LLMResponse_FirstToken == NULL || EchoTraffic2.LLMResponse_FirstToken == NULL, 1, 0) AS Shadow_LLMResponse_FirstToken_NullFlag,
+            IF(EchoTraffic1.ChatLCFR_R9 != NULL, 0, EchoTraffic1.ChatLCFR_R9) AS Shadow_ChatLCFR,  
+            IF(EchoTraffic1.ChatLCFR_R9 == NULL || EchoTraffic2.ChatLCFR_R9 == NULL, 1, 0) AS Shadow_ChatLCFR_NullFlag,
+            IF(EchoTraffic1.sssQueryAPI != NULL, 0, EchoTraffic1.sssQueryAPI) AS Shadow_sssQueryAPI,
+            IF(EchoTraffic1.sssQueryAPI == NULL || EchoTraffic2.sssQueryAPI == NULL, 1, 0) AS Shadow_sssQueryAPI_NullFlag,
+            IF(EchoTraffic1.SydneyLLMFirstTokenLatency != NULL, 0, EchoTraffic1.SydneyLLMFirstTokenLatency) AS Shadow_SydneyLLMFirstTokenLatency,
+            IF(EchoTraffic1.SydneyLLMFirstTokenLatency == NULL || EchoTraffic2.SydneyLLMFirstTokenLatency == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenLatency_NullFlag,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponseModel != NULL, 0, EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponseModel) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponseModel == NULL || EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponseModel == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponse != NULL, 0, EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponse) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponse == NULL || EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponse == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponse != NULL, 0, EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponse) AS Shadow_LLMCriticalPathFirstTokenResponse,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponse == NULL || EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponse == NULL, 1, 0) AS Shadow_LLMCriticalPathFirstTokenResponse_NullFlag,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponseModel != NULL, 0, EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponseModel) AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponseModel == NULL || EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponseModel == NULL, 1, 0) AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag,
+            IF(EchoTraffic1.LLMInputToken != NULL, 0, EchoTraffic1.LLMInputToken) AS Shadow_LLMInputToken,
+            IF(EchoTraffic1.LLMInputToken == NULL || EchoTraffic2.LLMInputToken == NULL, 1, 0) AS Shadow_LLMInputToken_NullFlag,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction != NULL, 0, EchoTraffic1.LLMInputTokenInvokingFunction) AS Shadow_LLMInputTokenInvokingFunction,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction == NULL || EchoTraffic2.LLMInputTokenInvokingFunction == NULL, 1, 0) AS Shadow_LLMInputTokenInvokingFunction_NullFlag,
+            IF(EchoTraffic1.LLMInputTokenResponding != NULL, 0, EchoTraffic1.LLMInputTokenResponding) AS Shadow_LLMInputTokenResponding,
+            IF(EchoTraffic1.LLMInputTokenResponding == NULL || EchoTraffic2.LLMInputTokenResponding == NULL, 1, 0) AS Shadow_LLMInputTokenResponding_NullFlag,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction_Responding != NULL, 0, EchoTraffic1.LLMInputTokenInvokingFunction_Responding) AS Shadow_LLMInputTokenInvokingFunction_Responding,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction_Responding == NULL || EchoTraffic2.LLMInputTokenInvokingFunction_Responding == NULL, 1, 0) AS Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag,
+            true AS Shadow_IsValidPair      
+       FROM EchoTraffic1 INNER JOIN EchoTraffic2
+        ON EchoTraffic1.EchoCorrelationId == EchoTraffic2.EchoCorrelationId;
+
+    EchoTraffic21 = SELECT EchoTraffic2.*.Except(EchoCorrelationId,IsEchoTraffic),
+            EchoTraffic2.IsEchoTraffic,
+            // PAIRED COLUMNS
+            (string.IsNullOrEmpty(EchoTraffic1.NoApologyDetectedState) || string.IsNullOrEmpty(EchoTraffic2.NoApologyDetectedState)) ? (double?)null :  (EchoTraffic2.NoApologyDetectedState.ToLower() == "pass" ? 1 : 0) - (EchoTraffic1.NoApologyDetectedState.ToLower() == "pass" ? 1 : 0) AS Shadow_E2ENRR,
+            (string.IsNullOrEmpty(EchoTraffic1.AvailabilityState) || string.IsNullOrEmpty(EchoTraffic2.AvailabilityState)) ? (double?)null :  (EchoTraffic2.AvailabilityState.ToLower() == "pass" ? 1 : 0) - (EchoTraffic1.AvailabilityState.ToLower() == "pass" ? 1 : 0) AS Shadow_Availability,
+            (EchoTraffic1.SydneyFCFR_R9 == null || EchoTraffic2.SydneyFCFR_R9 == null || EchoTraffic1.SydneyFCFR_R9 == EchoTraffic2.SydneyFCFR_R9) ? (double?)null :  EchoTraffic2.SydneyFCFR_R9 - EchoTraffic1.SydneyFCFR_R9  AS Shadow_ChatFCFRExcludesSameValueBetweenProdAndEcho,
+            IF(EchoTraffic2.SydneyFCFR_R9 != NULL, EchoTraffic2.SydneyFCFR_R9 - EchoTraffic1.SydneyFCFR_R9, NULL) AS Shadow_SydneyFCFR,
+            IF(EchoTraffic1.SydneyFCFR_R9 == NULL || EchoTraffic2.SydneyFCFR_R9 == NULL, 1, 0) AS Shadow_SydneyFCFR_NullFlag,            
+            IF(EchoTraffic2.ChatFCFR_R9 != NULL, EchoTraffic2.ChatFCFR_R9 - EchoTraffic1.ChatFCFR_R9, NULL) AS Shadow_ChatFCFR,
+            IF(EchoTraffic1.ChatFCFR_R9 == NULL || EchoTraffic2.ChatFCFR_R9 == NULL, 1, 0) AS Shadow_ChatFCFR_NullFlag,
+            IF(EchoTraffic2.LLMReason != NULL, EchoTraffic2.LLMReason - EchoTraffic1.LLMReason, NULL) AS Shadow_LLMReason,
+            IF(EchoTraffic1.LLMReason == NULL || EchoTraffic2.LLMReason == NULL, 1, 0) AS Shadow_LLMReason_NullFlag,
+            IF(EchoTraffic2.LLMReasonResponse != NULL, EchoTraffic2.LLMReasonResponse - EchoTraffic1.LLMReasonResponse, NULL) AS Shadow_LLMReasonResponse,
+            IF(EchoTraffic1.LLMReasonResponse == NULL || EchoTraffic2.LLMReasonResponse == NULL, 1, 0) AS Shadow_LLMReasonResponse_NullFlag,
+            IF(EchoTraffic2.LLMReasonUserQuery != NULL, EchoTraffic2.LLMReasonUserQuery - EchoTraffic1.LLMReasonUserQuery, NULL) AS Shadow_LLMReasonUserQuery,  
+            IF(EchoTraffic1.LLMReasonUserQuery == NULL || EchoTraffic2.LLMReasonUserQuery == NULL, 1, 0) AS Shadow_LLMReasonUserQuery_NullFlag,
+            IF(EchoTraffic2.LLMResponse_FirstToken != NULL, EchoTraffic2.LLMResponse_FirstToken - EchoTraffic1.LLMResponse_FirstToken, NULL) AS Shadow_LLMResponse_FirstToken,
+            IF(EchoTraffic1.LLMResponse_FirstToken == NULL || EchoTraffic2.LLMResponse_FirstToken == NULL, 1, 0) AS Shadow_LLMResponse_FirstToken_NullFlag,
+            IF(EchoTraffic2.ChatLCFR_R9 != NULL, EchoTraffic2.ChatLCFR_R9 - EchoTraffic1.ChatLCFR_R9, NULL) AS Shadow_ChatLCFR,
+            IF(EchoTraffic1.ChatLCFR_R9 == NULL || EchoTraffic2.ChatLCFR_R9 == NULL, 1, 0) AS Shadow_ChatLCFR_NullFlag,
+            IF(EchoTraffic2.sssQueryAPI != NULL, EchoTraffic2.sssQueryAPI - EchoTraffic1.sssQueryAPI, NULL) AS Shadow_sssQueryAPI,
+            IF(EchoTraffic1.sssQueryAPI == NULL || EchoTraffic2.sssQueryAPI == NULL, 1, 0) AS Shadow_sssQueryAPI_NullFlag,
+            IF(EchoTraffic2.SydneyLLMFirstTokenLatency != NULL, EchoTraffic2.SydneyLLMFirstTokenLatency - EchoTraffic1.SydneyLLMFirstTokenLatency, NULL) AS Shadow_SydneyLLMFirstTokenLatency,
+            IF(EchoTraffic1.SydneyLLMFirstTokenLatency == NULL || EchoTraffic2.SydneyLLMFirstTokenLatency == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenLatency_NullFlag,
+            IF(EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponseModel != NULL, EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponseModel - EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponseModel, NULL) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponseModel == NULL || EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponseModel == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag,
+            IF(EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponse != NULL, EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponse - EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponse, NULL) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse,
+            IF(EchoTraffic1.SydneyLLMFirstTokenPreFirstTokenResponse == NULL || EchoTraffic2.SydneyLLMFirstTokenPreFirstTokenResponse == NULL, 1, 0) AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag,
+            IF(EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponse != NULL, EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponse - EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponse, NULL) AS Shadow_LLMCriticalPathFirstTokenResponse,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponse == NULL || EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponse == NULL, 1, 0) AS Shadow_LLMCriticalPathFirstTokenResponse_NullFlag,
+            IF(EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponseModel != NULL, EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponseModel - EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponseModel, NULL) AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel,
+            IF(EchoTraffic1.SydneyLLMCriticalPathPreFirstTokenResponseModel == NULL || EchoTraffic2.SydneyLLMCriticalPathPreFirstTokenResponseModel == NULL, 1, 0) AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag,
+            IF(EchoTraffic2.LLMInputToken != NULL, EchoTraffic2.LLMInputToken - EchoTraffic1.LLMInputToken, NULL) AS Shadow_LLMInputToken,
+            IF(EchoTraffic1.LLMInputToken == NULL || EchoTraffic2.LLMInputToken == NULL, 1, 0) AS Shadow_LLMInputToken_NullFlag,
+            IF(EchoTraffic2.LLMInputTokenInvokingFunction != NULL, EchoTraffic2.LLMInputTokenInvokingFunction - EchoTraffic1.LLMInputTokenInvokingFunction, NULL) AS Shadow_LLMInputTokenInvokingFunction,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction == NULL || EchoTraffic2.LLMInputTokenInvokingFunction == NULL, 1, 0) AS Shadow_LLMInputTokenInvokingFunction_NullFlag,
+            IF(EchoTraffic2.LLMInputTokenResponding != NULL, EchoTraffic2.LLMInputTokenResponding - EchoTraffic1.LLMInputTokenResponding, NULL) AS Shadow_LLMInputTokenResponding,
+            IF(EchoTraffic1.LLMInputTokenResponding == NULL || EchoTraffic2.LLMInputTokenResponding == NULL, 1, 0) AS Shadow_LLMInputTokenResponding_NullFlag,
+            IF(EchoTraffic2.LLMInputTokenInvokingFunction_Responding != NULL, EchoTraffic2.LLMInputTokenInvokingFunction_Responding - EchoTraffic1.LLMInputTokenInvokingFunction_Responding, NULL) AS Shadow_LLMInputTokenInvokingFunction_Responding,
+            IF(EchoTraffic1.LLMInputTokenInvokingFunction_Responding == NULL || EchoTraffic2.LLMInputTokenInvokingFunction_Responding == NULL, 1, 0) AS Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag,
+            true AS Shadow_IsValidPair      
+       FROM EchoTraffic2 INNER JOIN EchoTraffic1
+        ON EchoTraffic1.EchoCorrelationId == EchoTraffic2.EchoCorrelationId;
+
+    data = SELECT * FROM EchoTraffic12 UNION ALL SELECT * FROM EchoTraffic21;
+
+    // Restore the Scope map after the echo DISTINCT and join operations are complete.
+    data =
+        SELECT *.Except(ReflectionMetricsStringMapJson),
+               string.IsNullOrEmpty(ReflectionMetricsStringMapJson)
+                   ? (Microsoft.SCOPE.Types.ScopeMap<string, string>)null
+                   : Newtonsoft.Json.JsonConvert.DeserializeObject<Microsoft.SCOPE.Types.ScopeMap<string, string>>(ReflectionMetricsStringMapJson)
+                   AS ReflectionMetricsStringMap,
+                (ARRAY<STRUCT<Timestamp: DateTime?, Id:string, LLMModel: string, HttpStatus:string, Latency: double?, TokensCount: STRUCT<CallTag:string, InputTokenType:string, InputTokensCount:long?, OutputTokensCount:long?, CachedTokensCount:long?, ReasoningTokensCount:long?>, LLMModelName: string, ModelClassification: string, SwitcherModelOutput: string, ResolvedModelName: string, LowValueContentMetrics: STRUCT<lowValueContentCharLength:long?, toolsCharLength:long?, totalCharLength:long?, ImagePlaceholderRule:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, DuplicateText:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, SharingHistoryNoise:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, LargeOpaqueUid:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, AllZeroGuid:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, ExcessivePunctuation:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>, ExcessiveWhitespace:STRUCT<occurrenceCount:long?, totalCharLengthDetected:long?>>, CacheabilityMetrics: STRUCT<OverallCharSize:long?, StaticPromptCharSize:long?, ToolDefinitionSize:long?, ToolGuidanceSize:long?, InnerMonologueSize:long?>, HttpStatusCode: int?, LlmScenarioId: string, LlmApiType: string, PromptSections: ARRAY<STRUCT<Role:string, Name:string, LengthInChars:int?, SectionKind:string>> >>) MyReaderHelper.FromLLMRequestsStringToStructArray(LLMRequests) AS LLMRequestsArray
+        FROM data;
+ 
+    // Set UserId and ConversationId == CorrelationId in order to have correct p-value compute in xcard
+    data = SELECT *.Except(ObjectId, BotConversationId),
+                  CorrelationId AS ObjectId,
+                  CorrelationId AS BotConversationId
+                  FROM data;
+
+    // Set correct schema
+    data = SELECT 
+    TIMESTAMP, 
+    DeployRing,
+    Region,
+    // TraceId,
+    CorrelationId,
+    TurnLevelCorrelationId,
+    TurnId,
+    // MessageId AS MessageId,
+    Origin, 
+    BotRequestId,
+    BotConversationId,
+    TotalNumUserMessages, 
+    // Source,
+    Market,
+    Locale,
+    NumSuggestedResponses,
+    // Offense,
+    CosmicPartition,
+    TenantId,
+    ObjectId,
+    ClientSessionId,
+    ExperienceType,
+    QueryAnnotationTypes,
+    // ExperienceTypeServer,
+    AppName, 
+    Product,
+    Scenario,
+    // UsedReferences,
+    BotUsedReferences,
+    IsEchoTraffic,
+    SourceBranch,
+	ClientPlatform,
+	ClientRegion,
+	UsedEntityAnnotations,
+    IsDisengaged,
+    ChatFSR,
+    ChatFSR_R9,
+    ChatFCFR,
+    ChatFCFR_R9,
+    ChatLCFR,
+    ChatLCFR_R9,
+    LLMReason,
+    LLMReasonResponse,
+    LLMReasonUserQuery,
+    LLMResponse_FirstToken,
+    sssQueryAPI,
+    sssQueryAPI_R9,
+    sss_EmailsSearchLatency_Iter1,
+    sss_EmailsSearchLatency_Iter2,
+    sss_EmailsSearchLatency_AllIter,
+    sss_FilesSearchLatency_Iter1,
+    sss_FilesSearchLatency_Iter2,
+    sss_FilesSearchLatency_AllIter,
+    sss_ChatSearchLatency_Iter1,
+    sss_ChatSearchLatency_Iter2,
+    sss_ChatSearchLatency_AllIter,
+    sss_MeetingsSearchLatency_Iter1,
+    sss_MeetingsSearchLatency_Iter2,
+    sss_MeetingsSearchLatency_AllIter,
+    sss_PeopleSearchLatency_Iter1,
+    sss_PeopleSearchLatency_Iter2,
+    sss_PeopleSearchLatency_AllIter,
+    sss_Personal_FilesSearchLatency_Iter1,
+    sss_Personal_FilesSearchLatency_Iter2,
+    sss_Personal_FilesSearchLatency_AllIter,
+    // sss_TeamsSearchLatency_Iter1,
+    // sss_TeamsSearchLatency_Iter2,
+    // sss_TeamsSearchLatency_AllIter,
+    // sss_CalendarSearchLatency_Iter1,
+    // sss_CalendarSearchLatency_Iter2,
+    // sss_CalendarSearchLatency_AllIter,
+    SSS_EmailContent_Iter1,
+    SSS_EmailContent_Iter2,
+    SSS_EmailContent_AllIter,
+    SSS_ExternalContent_Iter1,
+    SSS_ExternalContent_Iter2,
+    SSS_ExternalContent_AllIter,
+    SSS_FileContent_Iter1,
+    SSS_FileContent_Iter2,
+    SSS_FileContent_AllIter,
+    SSS_EventContent_Iter1,
+    SSS_EventContent_Iter2,
+    SSS_EventContent_AllIter,
+    SSS_GraphConnector_Iter1,
+    SSS_GraphConnector_Iter2,
+    SSS_GraphConnector_AllIter,
+    sss_SlowestSearchProviderLatency_Iter1,
+    sss_SlowestSearchProviderLatency_Iter2,
+    sss_SlowestSearchProviderLatency_AllIter,
+    sss_SlowestSearchProviderName_Iter1,
+    sss_SlowestSearchProviderName_Iter2,
+	// ChatFTR,
+	SydAmlReasoningTotal,
+	SydAmlReasoningTotal_UserQuery,
+	SydAmlRespondingFirstToken,
+	SydAmlReasoningTotal_ResponseReady,
+    E2ENRRState,
+	NoApologyDetectedState,
+	SydneyFCFR,
+    SydneyFCFR_R9,
+    AvailabilityState,
+    AppFlavor,
+    CitationCount,
+    UtteranceLength,
+    OrchestratorIterationCount,
+    SubstrateSearchReducedResultsMessages,
+    ToolExecutionFlow,
+    // SkillOrderInvocation,
+    WebEnabled,
+    EchoExperiment,
+    // SSSTransactionIdsLoggedBySydney AS SubstrateSearchTransactionIdsLoggedBySydney,
+    SubstrateSearchRestrictedSearchMode,
+    // SubstrateSearchRequestInfo,
+    sssEmptyResultRequests,
+    sssEmptyResultSuccessfulRequests,
+    sssTotalRequests,
+    sssTotalSuccessfulRequests,
+    sssTotalIterations,
+    sssTotalResultsCount,
+    isSearchTriggered,
+    NudgeTriggered, 
+    TurnLevelResponseActionsString, 
+    TurnLevelSystemActionsString,
+    // ConversationLevelResponseActionsString,
+    // ConversationLevelSystemActionsString,
+    LLMAPITokensCountList,
+	QuerySubmitProperties,	
+    ServerSessionId,
+    ComputedServerSessionId,
+	SecondsToNextTurn,
+	SessionDurationInSeconds,
+	StartTimeOfNextSession,
+	SessionTurnSequenceNumber,
+	SessionTotalTurnCount,
+    CopilotProduct,
+    CopilotExtensionIds,
+    CopilotExtensionState,
+    LanguageMismatchType,
+    IsUpiaUserMessageTriggered,
+    IsXpiaToolOutputTriggered,
+    IsCopyrightViolationTriggered,
+    IsUserMessageBlockListTriggered,
+    IsBotResponseBlockListTriggered,
+    SearchStrategyClassification,
+    ClientAppVersion,
+    IsWorkSearchEnabled,
+    CIQEntityTypesWithMetadata,
+    IsBotOffensiveClassifierTriggered,
+    CounterfactualLogging,
+    ReportLengthControl,
+    PreProcessedExecutionControls,
+    FileSizeCategory,
+    FileHasImage,
+    RealtimeTurnResult,
+    FeedbackThumbsClicks,
+    ClientPreferences,
+    RealtimeTurnPlaybackInterruption,
+    OfficeCopilot,
+    RAIClassifiersTriggered,
+    AgentExtendedDataArray,
+    Apis,
+    IsDegradedResponse,
+    DataverseRequests,
+    SpawnedTaskIds,
+    VisualInsightsData,
+    DatasetCategory,
+    BackgroundTaskData,
+    TaskId,
+    LLMGroundingEntities,
+    ReflectionMetricsStringMap,
+    ImageSourceBreakdown,
+    EditableBlockGenerated,
+    MessageStreamingMetricsExecutionEvent,
+    SkillsInfo,
+    ShoppingBerryForwardedProductCount,
+    CuaPluginInfo,
+    LLMRequestsArray,
+
+    // Feedback Data
+    CopilotFeedbackData_FeedbackActionList,
+    
+    // Score data
+    citedcg_avg_cited_label, 
+    citedcg_sum_cited_label, 
+    citedcg_num_bad_cites, 
+    citedcg_num_good_cites, 
+    citedcg_num_enterprise_cites, 
+    citedcg_gcc, 
+    citedcg_one_centric, 
+    citedcg_max_label, 
+    citedcg_all_bad_cites, 
+    citedcg_has_good_cite, 
+    citedcg_all_bad_cites_v2, 
+    citedcg_has_good_cite_v2, 
+    chatsat_overall_sat,
+    chatsat_overall_dsat,
+    chatsat_intent_primary,
+    chatsat_intent_secondary,
+    chatsat_intent_confidence,
+    chatsat_sentiment_score,
+    chatsat_sentiment_confidence,
+    chatsat_signal_inferred_score,
+    chatsat_signal_inferred_confidence,
+    chatsat_signal_inferred_sat,
+    chatsat_signal_inferred_dsat,
+    chatsat_signal_insights,
+    chatsat_signal_detected_scenario,
+    chatsat_signal_inferred_score_vnext,
+    chatsat_signal_inferred_confidence_vnext,
+    chatsat_signal_inferred_sat_vnext,
+    chatsat_signal_inferred_dsat_vnext,
+    chatsat_signal_insights_vnext,
+    chatsat_signal_detected_scenario_vnext,
+    chatsat_tc_relevance_score,
+    chatsat_tc_relevance_confidence,
+    chatsat_tc_contextual_score,
+    chatsat_tc_contextual_confidence,
+    chatsat_tc_completeness_score,
+    chatsat_tc_completeness_confidence,
+    chatsat_response_quality_score,
+    chatsat_response_quality_confidence,
+    chatsat_session_inferred_score,
+    chatsat_session_inferred_success,
+    chatsat_session_inferred_failure,
+    chatsat_session_insights,
+    chatsat_session_data_source,
+    SSR_OfficeRegion,
+    ChatSATS_OfficeRegion,
+    ChatSAT_OfficeRegion,
+    UtteranceGroup,
+    UtteranceScenario,
+    UtteranceIntent,
+    IDEAs_IsSatisfied,
+    IDEAs_IsDissatisfied,     
+
+    ShadowTriggerFlights,
+    ShadowOverrideFlights,
+    FluxVersion,
+    OrchestratorName,
+    DeclaritiveCopilotExtendedData,
+    MessageAuthor,
+    MessageType,
+    FromHistory,
+    TurnType,
+    OptionVariantsSet,
+    RequestPerfSegments,
+    (int?)null AS FluxLoopCount,
+    (int?)null AS ToolTriggerCount,
+    (int?)null AS ChatFirstTokenRenderedUnaccounted,
+    (int?)null AS SydneyFirstTokenResponseModelToFirstTokenResponse,
+    (int?)null AS SydneyFirstTokenResponseToLastTokenResponse,
+    SydneyLLMFirstTokenLatency,
+    SydneyLLMFirstTokenPreFirstTokenResponseModel,
+    SydneyLLMFirstTokenPreFirstTokenResponse,
+    (int?)null AS SydneyLLMFirstTokenPostFirstTokenResponse,
+    (int?)null AS SydneyLLMFirstVisibleToken,
+    (int?)null AS SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel,
+    (int?)null AS SydneyLLMFirstVisibleTokenPreFirstTokenResponse,
+    (int?)null AS SydneyLLMFirstVisibleTokenPostFirstTokenResponse,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel_R9,
+    SydneyLLMCriticalPathPreFirstTokenResponse,
+    (int?)null AS SydneyLLMCriticalPathPostFirstTokenResponse,
+    (int?)null AS SydneyLLMRespondingTokenStream,
+    (int?)null AS SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel,
+    (int?)null AS SydneyLLMRespondingTokenStreamPreFirstTokenResponse,
+    (int?)null AS SydneyLLMRespondingTokenStreamPostFirstTokenResponse,
+    (int?)null AS SydneyLLMToolInvocationTokenStream,
+    (int?)null AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel,
+    (int?)null AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse,
+    (int?)null AS SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse,
+    (int?)null AS ModelCalls_InvokingFunction,
+    (int?)null AS ModelCalls_Responding,
+    (int?)null AS ModelCalls_InvokingFunction_Responding,
+    (int?)null AS ModelCalls,
+    (int?)null AS TotalLLMCalls,
+    (int?)null AS MessageCounts,
+    LLMInputTokenInvokingFunction,
+    (int?)null AS LLMOutputTokenInvokingFunction,
+    LLMInputTokenResponding,
+    (int?)null AS LLMOutputTokenResponding,
+    LLMInputTokenInvokingFunction_Responding,
+    (int?)null AS LLMOutputTokenInvokingFunction_Responding,
+    LLMInputToken,
+    (int?)null AS LLMOutputToken,
+    LLMContextTokensIter1,
+    LLMContextTokensIter2,
+    LLMContextTokensIterGrt3,
+    LLMUncachedContextTokensIter1,
+    LLMUncachedContextTokensIter2,
+    LLMUncachedContextTokensIterGrt3,
+    LLMCachedContextTokensIter1,
+    LLMCachedContextTokensIter2,
+    LLMCachedContextTokensIterGrt3,
+    LLMCacheHitRateIter1,
+    LLMCacheHitRateIter2,
+    LLMCacheHitRateIterGrt3,
+    LLMLatency,
+    (int?)null AS SearchPostFirstTokenReponse,
+    (int?)null AS SSS_Transcripts_Iter1,
+    (int?)null AS SSS_Transcripts_Iter2,
+    (int?)null AS SSS_Moments_Iter1,
+    (int?)null AS SSS_Moments_Iter2,
+    (int?)null AS SSS_Moments_RunAsync_Iter1,
+    (int?)null AS SSS_Moments_RunAsync_Iter2,
+    (int?)null AS SSS_Moments_RunAsync_MomentsContentProvider_Iter1,
+    (int?)null AS SSS_Moments_RunAsync_MomentsContentProvider_Iter2,
+    (int?)null AS SSS_Moments_RunAsync_MomentsProvider_Iter1,
+    (int?)null AS SSS_Moments_RunAsync_MomentsProvider_Iter2,
+    (int?)null AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1,
+    (int?)null AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2,
+    (int?)null AS UserPerceivedLoadTime,
+    (int?)null AS InputPaint,
+    (int?)null AS MetaOsLoad,
+    (int?)null AS SessionsPaint,
+    (int?)null AS ZqPaint,
+    LuClassification,
+    ChatMode,
+    (int?)null AS RealTimeConnection_DurationInMs,
+    (int?)null AS RealTimeConnection_SetupLatencyInMs,
+    (string)null AS RealTimeConnection_Status,
+    ExtensionExecutionFlow_ExtensionNames ,
+    ExtensionExecutionFlow_ExtensionOutcomes ,
+    ExtensionExecutionFlow_Timestamps ,
+    ClientInformation_DeviceOS,
+    ClientInformation_DeviceType,
+    UserIdPUID,
+    EndpointL1,
+    EndpointL2,
+    CustomInstructionUpsertResult,
+    PersonalizationSettings,
+    SkdsMetrics,
+    SSSRequests,
+    SydneyLatency,
+    MeteringCheckResponse,
+    ClientLatency,
+    ChatPlusPages,
+    ClientInformation,
+    LLMRequests,
+    BingRequests,
+    ProductInformation,
+    AgentExtendedData,
+    ToolExecutionDetails,
+    RaiPoliciesConfiguration,
+    SafetyRouterTriggered,
+    ScorecardSessionId,
+    FromCode,
+    FileExtensions,
+    IntentSegmentation,
+    R9Latency,
+    IsAgentRuntime,
+    AgentRuntime,
+    PluginInvocations,
+    Tone,
+
+    FromHistory_TurnLevelResponseActionsString,
+    FromHistory_FeedbackActionList,
+    FromHistory_TurnCount,
+    
+
+    Flight,
+    
+    SydFlights,
+    sssFlights,
+    ClientFlights,
+    
+    Shadow_E2ENRR,
+    Shadow_Availability,
+    Shadow_ChatFCFR,
+    Shadow_LLMReason,
+    Shadow_LLMReasonResponse,
+    Shadow_LLMReasonUserQuery,
+    Shadow_LLMResponse_FirstToken,
+    Shadow_SydneyFCFR,
+    Shadow_ChatLCFR,
+    Shadow_sssQueryAPI,
+    Shadow_SydneyFCFR_NullFlag,
+    Shadow_ChatFCFR_NullFlag,
+    Shadow_LLMReason_NullFlag,
+    Shadow_LLMReasonResponse_NullFlag,
+    Shadow_LLMReasonUserQuery_NullFlag,
+    Shadow_LLMResponse_FirstToken_NullFlag,
+    Shadow_ChatLCFR_NullFlag,
+    Shadow_sssQueryAPI_NullFlag,
+    Shadow_SydneyLLMFirstTokenLatency,
+    Shadow_SydneyLLMFirstTokenLatency_NullFlag,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag,
+    Shadow_LLMCriticalPathFirstTokenResponse,
+    Shadow_LLMCriticalPathFirstTokenResponse_NullFlag,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag,
+    Shadow_LLMInputToken,
+    Shadow_LLMInputToken_NullFlag,
+    Shadow_LLMInputTokenInvokingFunction,
+    Shadow_LLMInputTokenInvokingFunction_NullFlag,
+    Shadow_LLMInputTokenResponding,
+    Shadow_LLMInputTokenResponding_NullFlag,
+    Shadow_LLMInputTokenInvokingFunction_Responding,
+    Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag,
+    Shadow_IsValidPair
+    FROM data;
+        
+#ELSE
+    // This is online A/B scorecard so set Shadow columns to null
+    data = SELECT * FROM data WHERE !string.IsNullOrEmpty(Flight);
+
+    // Append flights to end
+    data = SELECT *.Except(SydFlights, sssFlights, ClientFlights),
+                SydFlights,
+                sssFlights,
+                ClientFlights;
+    
+    data = SELECT *,
+                    (double?)null AS Shadow_E2ENRR,
+                    (double?)null AS Shadow_Availability,
+                    (int?)null AS Shadow_ChatFCFR,
+                    (int?)null AS Shadow_LLMReason,
+                    (int?)null AS Shadow_LLMReasonResponse,
+                    (int?)null AS Shadow_LLMReasonUserQuery,
+                    (int?)null AS Shadow_LLMResponse_FirstToken,
+                    (int?)null AS Shadow_SydneyFCFR,
+                    (int?)null AS Shadow_ChatLCFR,
+                    (int?)null AS Shadow_sssQueryAPI,
+                    (int)0 AS Shadow_SydneyFCFR_NullFlag,
+                    (int)0 AS Shadow_ChatFCFR_NullFlag,
+                    (int)0 AS Shadow_LLMReason_NullFlag,
+                    (int)0 AS Shadow_LLMReasonResponse_NullFlag,
+                    (int)0 AS Shadow_LLMReasonUserQuery_NullFlag,
+                    (int)0 AS Shadow_LLMResponse_FirstToken_NullFlag,
+                    (int)0 AS Shadow_ChatLCFR_NullFlag,
+                    (int)0 AS Shadow_sssQueryAPI_NullFlag,
+                    (int?)null AS Shadow_SydneyLLMFirstTokenLatency,
+                    (int)0 AS Shadow_SydneyLLMFirstTokenLatency_NullFlag,
+                    (int?)null AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel,
+                    (int)0 AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag,
+                    (int?)null AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse,
+                    (int)0 AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag,
+                    (int?)null AS Shadow_LLMCriticalPathFirstTokenResponse,
+                    (int)0 AS Shadow_LLMCriticalPathFirstTokenResponse_NullFlag,
+                    (int?)null AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel,
+                    (int)0 AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag,
+                    (int?)null AS Shadow_LLMInputToken,
+                    (int)0 AS Shadow_LLMInputToken_NullFlag,
+                    (int?)null AS Shadow_LLMInputTokenInvokingFunction,
+                    (int)0 AS Shadow_LLMInputTokenInvokingFunction_NullFlag,
+                    (int?)null AS Shadow_LLMInputTokenResponding,
+                    (int)0 AS Shadow_LLMInputTokenResponding_NullFlag,
+                    (int?)null AS Shadow_LLMInputTokenInvokingFunction_Responding,
+                    (int)0 AS Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag,
+                    false AS Shadow_IsValidPair 
+            FROM data;
+#ENDIF
+
+// Append Flight to end
+#IF(@StripAllocationIds)
+    // map flights back to flights with allocation ids using FlightAllocationMap
+    data = SELECT 
+        data.*.Except(Flight),
+        @FlightAllocationMap.ContainsKey(Flight) ? @FlightAllocationMap[Flight] : Flight AS Flight
+    FROM data;
+#ELSE
+    data = SELECT 
+        data.*.Except(Flight),
+        Flight
+    FROM data;
+#ENDIF
+
+#IF(!string.IsNullOrEmpty(@TrafficFiltersCosmicPartition))
+    data = SELECT * FROM data WHERE @TrafficFiltersCosmicPartition.ToUpperInvariant().Split(',').Any(x => CosmicPartition != null && x == CosmicPartition.ToUpperInvariant());
+#ENDIF
+
+#IF(!string.IsNullOrEmpty(@TrafficFiltersDeployRing))
+    data = SELECT * FROM data WHERE @TrafficFiltersDeployRing.ToUpperInvariant().Split(',').Any(x => x == "SDFV2" ? DeployRing != null && DeployRing.ToUpperInvariant() == "SDF" : (x == "WW" || x == "DONMT") ? DeployRing.ToUpperInvariant() == "PROD" : x == DeployRing.ToUpperInvariant());
+#ENDIF
+
+#IF(@ExtraOptions.Contains("JoinVIPUsersAndTenants"))
+    // Join VIP identity views (docs: https://ideasehost.microsoft.com/en-us/pages/vip-users-and-vip-tenants).
+    // VIPUsers_v1  : (OMSTenantId, UserId, IsVIP), requires HistoryDate
+    // VIPTenants_v1: (OMSTenantId, IsVIP),          requires HistoryDate
+    // VIP tables are keyed on lower-case AAD ids (Verify pass normalizes with Trim().ToLowerInvariant()),
+    // so we lower the left-side keys once before joining.
+    // Wiki lists a single External Path for both views (partitions ROW+EUDB are resolved through the
+    // /shares/IDEAs.Prod.Data mount); no region-specific abfss form is documented for these views.
+    #DECLARE VIPUsersViewPath string = @"/shares/IDEAs.Prod.Data/Publish.Profiles.User.Commercial.VIP.VIPUsers/Views/v1/VIPUsers.view";
+    #DECLARE VIPTenantsViewPath string = @"/shares/IDEAs.Prod.Data/Publish.Profiles.Tenant.Commercial.VIP.VIPTenants/Views/v1/VIPTenants.view";
+                                            
+    vipUsers =
+        SELECT UserId, IsVIP
+        FROM
+        (
+            VIEW @VIPUsersViewPath
+            PARAMS
+            (
+                HistoryDate = DateTime.Parse(@StartDateTime)
+            )
+        );
+
+    vipTenants =
+        SELECT OMSTenantId, IsVIP
+        FROM
+        (
+            VIEW @VIPTenantsViewPath
+            PARAMS
+            (
+                HistoryDate = DateTime.Parse(@StartDateTime)
+            )
+        );
+
+    // Pre-compute lowered join keys once (guarded against null) so downstream LEFT OUTER JOINs match VIP ids.
+    // The helper columns _VIPUserIdLower / _VIPTenantIdLower are dropped by the explicit final SELECT below.
+    data =
+        SELECT data.*,
+               string.IsNullOrEmpty(ObjectId) ? null : ObjectId.ToLower() AS _VIPUserIdLower,
+               string.IsNullOrEmpty(TenantId)   ? null : TenantId.ToLower()   AS _VIPTenantIdLower
+        FROM data;
+
+    data =
+        SELECT data.*,
+               vipUsers.IsVIP   AS IsVIPUser,
+               vipTenants.IsVIP AS IsVIPTenant
+        FROM data
+            LEFT OUTER JOIN vipUsers   ON data._VIPUserIdLower   == vipUsers.UserId
+            LEFT OUTER JOIN vipTenants ON data._VIPTenantIdLower == vipTenants.OMSTenantId;
+#ELSE
+    // Preserve the static SCHEMA when the option is not set: emit null flags for both columns.
+    data =
+        SELECT data.*,
+               (bool?)null AS IsVIPUser,
+               (bool?)null AS IsVIPTenant
+        FROM data;
+#ENDIF
+
+// Final select to ensure correct column order
+data = SELECT 
+    TIMESTAMP  AS TIMESTAMP ,
+    DeployRing  AS DeployRing ,
+    Region  AS Region ,
+    // TraceId  AS TraceId ,
+    CorrelationId  AS CorrelationId ,
+    TurnLevelCorrelationId  AS TurnLevelCorrelationId ,
+    TurnId  AS TurnId ,
+    // MessageId  AS MessageId ,
+    Origin  AS Origin ,
+    BotRequestId  AS BotRequestId ,
+    BotConversationId  AS BotConversationId ,
+    TotalNumUserMessages  AS TotalNumUserMessages ,
+    // Source  AS Source ,
+    Market  AS Market ,
+    Locale  AS Locale ,
+    NumSuggestedResponses  AS NumSuggestedResponses ,
+    // Offense  AS Offense ,
+    CosmicPartition  AS CosmicPartition ,
+    TenantId  AS TenantId ,
+    ObjectId  AS ObjectId ,
+    ClientSessionId AS ClientSessionId,
+    ExperienceType  AS ExperienceType ,
+    QueryAnnotationTypes  AS QueryAnnotationTypes ,
+    // ExperienceTypeServer  AS ExperienceTypeServer ,
+    AppName  AS AppName ,
+    Product  AS Product ,
+    Scenario  AS Scenario ,
+    // UsedReferences  AS UsedReferences ,
+    BotUsedReferences  AS BotUsedReferences ,
+    IsEchoTraffic  AS IsEchoTraffic ,
+    SourceBranch  AS SourceBranch ,
+	ClientPlatform AS ClientPlatform,
+	ClientRegion AS ClientRegion,
+	UsedEntityAnnotations AS UsedEntityAnnotations,
+    IsDisengaged  AS IsDisengaged ,
+    ChatFSR  AS ChatFSR,
+    ChatFSR_R9 AS ChatFSR_R9,
+    ChatFCFR AS ChatFCFR,
+    ChatFCFR_R9 AS ChatFCFR_R9,
+    ChatLCFR AS ChatLCFR,
+    ChatLCFR_R9 AS ChatLCFR_R9,
+    LLMReason AS LLMReason,
+    LLMReasonResponse AS LLMReasonResponse,
+    LLMReasonUserQuery AS LLMReasonUserQuery,
+    LLMResponse_FirstToken AS LLMResponse_FirstToken,
+    sssQueryAPI AS sssQueryAPI,
+    sssQueryAPI_R9 AS sssQueryAPI_R9,
+    sss_EmailsSearchLatency_Iter1 AS sss_EmailsSearchLatency_Iter1,
+    sss_EmailsSearchLatency_Iter2 AS sss_EmailsSearchLatency_Iter2,
+    sss_EmailsSearchLatency_AllIter AS sss_EmailsSearchLatency_AllIter,
+    sss_FilesSearchLatency_Iter1 AS sss_FilesSearchLatency_Iter1,
+    sss_FilesSearchLatency_Iter2 AS sss_FilesSearchLatency_Iter2,
+    sss_FilesSearchLatency_AllIter AS sss_FilesSearchLatency_AllIter,
+    sss_ChatSearchLatency_Iter1 AS sss_ChatSearchLatency_Iter1,
+    sss_ChatSearchLatency_Iter2 AS sss_ChatSearchLatency_Iter2,
+    sss_ChatSearchLatency_AllIter AS sss_ChatSearchLatency_AllIter,
+    sss_MeetingsSearchLatency_Iter1 AS sss_MeetingsSearchLatency_Iter1,
+    sss_MeetingsSearchLatency_Iter2 AS sss_MeetingsSearchLatency_Iter2,
+    sss_MeetingsSearchLatency_AllIter AS sss_MeetingsSearchLatency_AllIter,
+    sss_PeopleSearchLatency_Iter1 AS sss_PeopleSearchLatency_Iter1,
+    sss_PeopleSearchLatency_Iter2 AS sss_PeopleSearchLatency_Iter2,
+    sss_PeopleSearchLatency_AllIter AS sss_PeopleSearchLatency_AllIter,
+    sss_Personal_FilesSearchLatency_Iter1 AS sss_Personal_FilesSearchLatency_Iter1,
+    sss_Personal_FilesSearchLatency_Iter2 AS sss_Personal_FilesSearchLatency_Iter2,
+    sss_Personal_FilesSearchLatency_AllIter AS sss_Personal_FilesSearchLatency_AllIter,
+    // sss_TeamsSearchLatency_Iter1 AS sss_TeamsSearchLatency_Iter1,
+    // sss_TeamsSearchLatency_Iter2 AS sss_TeamsSearchLatency_Iter2,
+    // sss_TeamsSearchLatency_AllIter AS sss_TeamsSearchLatency_AllIter,
+    // sss_CalendarSearchLatency_Iter1 AS sss_CalendarSearchLatency_Iter1,
+    // sss_CalendarSearchLatency_Iter2 AS sss_CalendarSearchLatency_Iter2,
+    // sss_CalendarSearchLatency_AllIter AS sss_CalendarSearchLatency_AllIter,
+    SSS_EmailContent_Iter1 AS SSS_EmailContent_Iter1,
+    SSS_EmailContent_Iter2 AS SSS_EmailContent_Iter2,
+    SSS_EmailContent_AllIter AS SSS_EmailContent_AllIter,
+    SSS_ExternalContent_Iter1 AS SSS_ExternalContent_Iter1,
+    SSS_ExternalContent_Iter2 AS SSS_ExternalContent_Iter2,
+    SSS_ExternalContent_AllIter AS SSS_ExternalContent_AllIter,
+    SSS_FileContent_Iter1 AS SSS_FileContent_Iter1,
+    SSS_FileContent_Iter2 AS SSS_FileContent_Iter2,
+    SSS_FileContent_AllIter AS SSS_FileContent_AllIter,
+    SSS_EventContent_Iter1 AS SSS_EventContent_Iter1,
+    SSS_EventContent_Iter2 AS SSS_EventContent_Iter2,
+    SSS_EventContent_AllIter AS SSS_EventContent_AllIter,
+    SSS_GraphConnector_Iter1 AS SSS_GraphConnector_Iter1,
+    SSS_GraphConnector_Iter2 AS SSS_GraphConnector_Iter2,
+    SSS_GraphConnector_AllIter AS SSS_GraphConnector_AllIter,
+    sss_SlowestSearchProviderLatency_Iter1 AS sss_SlowestSearchProviderLatency_Iter1,
+    sss_SlowestSearchProviderLatency_Iter2 AS sss_SlowestSearchProviderLatency_Iter2,
+    sss_SlowestSearchProviderLatency_AllIter AS sss_SlowestSearchProviderLatency_AllIter,
+    sss_SlowestSearchProviderName_Iter1 AS sss_SlowestSearchProviderName_Iter1,
+    sss_SlowestSearchProviderName_Iter2 AS sss_SlowestSearchProviderName_Iter2,
+	// ChatFTR AS ChatFTR,
+	SydAmlReasoningTotal AS SydAmlReasoningTotal,
+	SydAmlReasoningTotal_UserQuery AS SydAmlReasoningTotal_UserQuery,
+	SydAmlRespondingFirstToken AS SydAmlRespondingFirstToken,
+	SydAmlReasoningTotal_ResponseReady AS SydAmlReasoningTotal_ResponseReady,
+    E2ENRRState  AS E2ENRRState ,
+	NoApologyDetectedState  AS NoApologyDetectedState ,
+	SydneyFCFR AS SydneyFCFR,
+    SydneyFCFR_R9 AS SydneyFCFR_R9,
+    AvailabilityState  AS AvailabilityState ,
+    AppFlavor AS AppFlavor,
+    CitationCount  AS CitationCount ,
+    UtteranceLength  AS UtteranceLength ,
+    OrchestratorIterationCount  AS OrchestratorIterationCount ,
+    SubstrateSearchReducedResultsMessages  AS SubstrateSearchReducedResultsMessages ,
+    ToolExecutionFlow  AS ToolExecutionFlow ,
+    // SkillOrderInvocation  AS SkillOrderInvocation ,
+    WebEnabled AS WebEnabled,
+    EchoExperiment  AS EchoExperiment ,
+    // SubstrateSearchTransactionIdsLoggedBySydney  AS SubstrateSearchTransactionIdsLoggedBySydney ,
+    SubstrateSearchRestrictedSearchMode  AS SubstrateSearchRestrictedSearchMode ,
+    // SubstrateSearchRequestInfo  AS SubstrateSearchRequestInfo ,
+    sssEmptyResultRequests  AS sssEmptyResultRequests ,
+    sssEmptyResultSuccessfulRequests  AS sssEmptyResultSuccessfulRequests ,
+    sssTotalRequests  AS sssTotalRequests ,
+    sssTotalSuccessfulRequests  AS sssTotalSuccessfulRequests ,
+    sssTotalIterations  AS sssTotalIterations ,
+    sssTotalResultsCount  AS sssTotalResultsCount ,
+    isSearchTriggered  AS isSearchTriggered ,
+    NudgeTriggered AS NudgeTriggered,
+	TurnLevelResponseActionsString AS TurnLevelResponseActionsString,
+	TurnLevelSystemActionsString AS TurnLevelSystemActionsString,
+	// ConversationLevelResponseActionsString AS ConversationLevelResponseActionsString,
+	// ConversationLevelSystemActionsString AS ConversationLevelSystemActionsString,
+    LLMAPITokensCountList AS LLMAPITokensCountList,
+	QuerySubmitProperties AS QuerySubmitProperties,
+	ServerSessionId AS ServerSessionId,
+    ComputedServerSessionId AS ComputedServerSessionId,
+	SecondsToNextTurn AS SecondsToNextTurn,
+	SessionDurationInSeconds AS SessionDurationInSeconds,
+	StartTimeOfNextSession AS StartTimeOfNextSession,
+	SessionTurnSequenceNumber AS SessionTurnSequenceNumber,
+	SessionTotalTurnCount AS SessionTotalTurnCount,
+    CopilotProduct AS CopilotProduct,
+    CopilotExtensionIds  AS CopilotExtensionIds ,
+    CopilotExtensionState  AS CopilotExtensionState ,
+    LanguageMismatchType AS LanguageMismatchType,
+    IsUpiaUserMessageTriggered AS IsUpiaUserMessageTriggered,
+    IsXpiaToolOutputTriggered AS IsXpiaToolOutputTriggered,
+    IsCopyrightViolationTriggered AS IsCopyrightViolationTriggered,
+    IsUserMessageBlockListTriggered AS IsUserMessageBlockListTriggered,
+    IsBotResponseBlockListTriggered AS IsBotResponseBlockListTriggered,
+    SearchStrategyClassification AS SearchStrategyClassification,
+    ClientAppVersion  AS ClientAppVersion ,
+    IsWorkSearchEnabled  AS IsWorkSearchEnabled ,
+    CIQEntityTypesWithMetadata  AS CIQEntityTypesWithMetadata ,
+    IsBotOffensiveClassifierTriggered  AS IsBotOffensiveClassifierTriggered ,
+    CounterfactualLogging AS CounterfactualLogging,
+    ReportLengthControl  AS ReportLengthControl ,
+    PreProcessedExecutionControls  AS PreProcessedExecutionControls ,
+    FileSizeCategory  AS FileSizeCategory ,
+    FileHasImage  AS FileHasImage ,
+
+    // Feedback data
+    CopilotFeedbackData_FeedbackActionList AS CopilotFeedbackData_FeedbackActionList,
+    
+    // Score Data
+    citedcg_avg_cited_label AS citedcg_avg_cited_label,
+    citedcg_sum_cited_label AS citedcg_sum_cited_label,
+    citedcg_num_bad_cites AS citedcg_num_bad_cites,
+    citedcg_num_good_cites AS citedcg_num_good_cites,
+    citedcg_num_enterprise_cites AS citedcg_num_enterprise_cites,
+    citedcg_gcc AS citedcg_gcc,
+    citedcg_one_centric AS citedcg_one_centric,
+    citedcg_max_label AS citedcg_max_label,
+    citedcg_all_bad_cites AS citedcg_all_bad_cites,
+    citedcg_has_good_cite AS citedcg_has_good_cite,
+    citedcg_all_bad_cites_v2 AS citedcg_all_bad_cites_v2,
+    citedcg_has_good_cite_v2 AS citedcg_has_good_cite_v2,
+    chatsat_overall_sat AS chatsat_overall_sat,
+    chatsat_overall_dsat AS chatsat_overall_dsat,
+    chatsat_intent_primary AS chatsat_intent_primary,
+    chatsat_intent_secondary AS chatsat_intent_secondary,
+    chatsat_intent_confidence AS chatsat_intent_confidence,
+    chatsat_sentiment_score AS chatsat_sentiment_score,
+    chatsat_sentiment_confidence AS chatsat_sentiment_confidence,
+    chatsat_signal_inferred_score AS chatsat_signal_inferred_score,
+    chatsat_signal_inferred_confidence AS chatsat_signal_inferred_confidence,
+    chatsat_signal_inferred_sat AS chatsat_signal_inferred_sat,
+    chatsat_signal_inferred_dsat AS chatsat_signal_inferred_dsat,
+    chatsat_signal_insights AS chatsat_signal_insights,
+    chatsat_signal_detected_scenario AS chatsat_signal_detected_scenario,
+    chatsat_signal_inferred_score_vnext AS chatsat_signal_inferred_score_vnext,
+    chatsat_signal_inferred_confidence_vnext AS chatsat_signal_inferred_confidence_vnext,
+    chatsat_signal_inferred_sat_vnext AS chatsat_signal_inferred_sat_vnext,
+    chatsat_signal_inferred_dsat_vnext AS chatsat_signal_inferred_dsat_vnext,
+    chatsat_signal_insights_vnext AS chatsat_signal_insights_vnext,
+    chatsat_signal_detected_scenario_vnext AS chatsat_signal_detected_scenario_vnext,
+    chatsat_tc_relevance_score AS chatsat_tc_relevance_score,
+    chatsat_tc_relevance_confidence AS chatsat_tc_relevance_confidence,
+    chatsat_tc_contextual_score AS chatsat_tc_contextual_score,
+    chatsat_tc_contextual_confidence AS chatsat_tc_contextual_confidence,
+    chatsat_tc_completeness_score AS chatsat_tc_completeness_score,
+    chatsat_tc_completeness_confidence AS chatsat_tc_completeness_confidence,
+    chatsat_response_quality_score AS chatsat_response_quality_score,
+    chatsat_response_quality_confidence AS chatsat_response_quality_confidence,
+    chatsat_session_inferred_score AS chatsat_session_inferred_score,
+    chatsat_session_inferred_success AS chatsat_session_inferred_success,
+    chatsat_session_inferred_failure AS chatsat_session_inferred_failure,
+    chatsat_session_insights AS chatsat_session_insights,
+    chatsat_session_data_source AS chatsat_session_data_source,
+    SSR_OfficeRegion AS SSR_OfficeRegion,
+    ChatSATS_OfficeRegion AS ChatSATS_OfficeRegion,
+    ChatSAT_OfficeRegion AS ChatSAT_OfficeRegion,
+    UtteranceGroup AS UtteranceGroup,
+    UtteranceScenario AS UtteranceScenario,
+    UtteranceIntent AS UtteranceIntent,
+    IDEAs_IsSatisfied  AS IDEAs_IsSatisfied ,
+    IDEAs_IsDissatisfied  AS IDEAs_IsDissatisfied ,
+    ShadowTriggerFlights AS ShadowTriggerFlights,
+    ShadowOverrideFlights AS ShadowOverrideFlights,
+    FluxVersion AS FluxVersion,
+    OrchestratorName AS OrchestratorName,
+    DeclaritiveCopilotExtendedData AS DeclaritiveCopilotExtendedData,
+    MessageAuthor AS MessageAuthor,
+    MessageType AS MessageType,
+    FromHistory AS FromHistory,
+    TurnType AS TurnType,
+    OptionVariantsSet AS OptionVariantsSet,
+    RequestPerfSegments AS RequestPerfSegments,
+    FluxLoopCount AS FluxLoopCount,
+    ToolTriggerCount AS ToolTriggerCount,
+    ChatFirstTokenRenderedUnaccounted AS ChatFirstTokenRenderedUnaccounted,
+    SydneyFirstTokenResponseModelToFirstTokenResponse AS SydneyFirstTokenResponseModelToFirstTokenResponse,
+    SydneyFirstTokenResponseToLastTokenResponse AS SydneyFirstTokenResponseToLastTokenResponse,
+    SydneyLLMFirstTokenLatency AS SydneyLLMFirstTokenLatency,
+    SydneyLLMFirstTokenPreFirstTokenResponseModel AS SydneyLLMFirstTokenPreFirstTokenResponseModel,
+    SydneyLLMFirstTokenPreFirstTokenResponse AS SydneyLLMFirstTokenPreFirstTokenResponse,
+    SydneyLLMFirstTokenPostFirstTokenResponse AS SydneyLLMFirstTokenPostFirstTokenResponse,
+    SydneyLLMFirstVisibleToken AS SydneyLLMFirstVisibleToken,
+    SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel AS SydneyLLMFirstVisibleTokenPreFirstTokenResponseModel,
+    SydneyLLMFirstVisibleTokenPreFirstTokenResponse AS SydneyLLMFirstVisibleTokenPreFirstTokenResponse,
+    SydneyLLMFirstVisibleTokenPostFirstTokenResponse AS SydneyLLMFirstVisibleTokenPostFirstTokenResponse,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel AS SydneyLLMCriticalPathPreFirstTokenResponseModel,
+    SydneyLLMCriticalPathPreFirstTokenResponseModel_R9 AS SydneyLLMCriticalPathPreFirstTokenResponseModel_R9,
+    SydneyLLMCriticalPathPreFirstTokenResponse AS SydneyLLMCriticalPathPreFirstTokenResponse,
+    SydneyLLMCriticalPathPostFirstTokenResponse AS SydneyLLMCriticalPathPostFirstTokenResponse,
+    SydneyLLMRespondingTokenStream AS SydneyLLMRespondingTokenStream,
+    SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel AS SydneyLLMRespondingTokenStreamPreFirstTokenResponseModel,
+    SydneyLLMRespondingTokenStreamPreFirstTokenResponse AS SydneyLLMRespondingTokenStreamPreFirstTokenResponse,
+    SydneyLLMRespondingTokenStreamPostFirstTokenResponse AS SydneyLLMRespondingTokenStreamPostFirstTokenResponse,
+    SydneyLLMToolInvocationTokenStream AS SydneyLLMToolInvocationTokenStream,
+    SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponseModel,
+    SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse AS SydneyLLMToolInvocationTokenStreamPreFirstTokenResponse,
+    SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse AS SydneyLLMToolInvocationTokenStreamPostFirstTokenResponse,
+    ModelCalls_InvokingFunction AS ModelCalls_InvokingFunction,
+    ModelCalls_Responding AS ModelCalls_Responding,
+    ModelCalls_InvokingFunction_Responding AS ModelCalls_InvokingFunction_Responding,
+    ModelCalls AS ModelCalls,
+    TotalLLMCalls AS TotalLLMCalls,
+    MessageCounts AS MessageCounts,
+    LLMInputTokenInvokingFunction AS LLMInputTokenInvokingFunction,
+    LLMOutputTokenInvokingFunction AS LLMOutputTokenInvokingFunction,
+    LLMInputTokenResponding AS LLMInputTokenResponding,
+    LLMOutputTokenResponding AS LLMOutputTokenResponding,
+    LLMInputTokenInvokingFunction_Responding AS LLMInputTokenInvokingFunction_Responding,
+    LLMOutputTokenInvokingFunction_Responding AS LLMOutputTokenInvokingFunction_Responding,
+    LLMInputToken AS LLMInputToken,
+    LLMOutputToken AS LLMOutputToken,
+    LLMContextTokensIter1 AS LLMContextTokensIter1,
+    LLMContextTokensIter2 AS LLMContextTokensIter2,
+    LLMContextTokensIterGrt3 AS LLMContextTokensIterGrt3,
+    LLMUncachedContextTokensIter1 AS LLMUncachedContextTokensIter1,
+    LLMUncachedContextTokensIter2 AS LLMUncachedContextTokensIter2,
+    LLMUncachedContextTokensIterGrt3 AS LLMUncachedContextTokensIterGrt3,
+    LLMCachedContextTokensIter1 AS LLMCachedContextTokensIter1,
+    LLMCachedContextTokensIter2 AS LLMCachedContextTokensIter2,
+    LLMCachedContextTokensIterGrt3 AS LLMCachedContextTokensIterGrt3,
+    LLMCacheHitRateIter1 AS LLMCacheHitRateIter1,
+    LLMCacheHitRateIter2 AS LLMCacheHitRateIter2,
+    LLMCacheHitRateIterGrt3 AS LLMCacheHitRateIterGrt3,
+    LLMLatency AS LLMLatency,
+    SearchPostFirstTokenReponse AS SearchPostFirstTokenReponse,
+    SSS_Transcripts_Iter1 AS SSS_Transcripts_Iter1,
+    SSS_Transcripts_Iter2 AS SSS_Transcripts_Iter2,
+    SSS_Moments_Iter1 AS SSS_Moments_Iter1,
+    SSS_Moments_Iter2 AS SSS_Moments_Iter2,
+    SSS_Moments_RunAsync_Iter1 AS SSS_Moments_RunAsync_Iter1,
+    SSS_Moments_RunAsync_Iter2 AS SSS_Moments_RunAsync_Iter2,
+    SSS_Moments_RunAsync_MomentsContentProvider_Iter1 AS SSS_Moments_RunAsync_MomentsContentProvider_Iter1,
+    SSS_Moments_RunAsync_MomentsContentProvider_Iter2 AS SSS_Moments_RunAsync_MomentsContentProvider_Iter2,
+    SSS_Moments_RunAsync_MomentsProvider_Iter1 AS SSS_Moments_RunAsync_MomentsProvider_Iter1,
+    SSS_Moments_RunAsync_MomentsProvider_Iter2 AS SSS_Moments_RunAsync_MomentsProvider_Iter2,
+    SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1 AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter1,
+    SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2 AS SSS_Moments_RunAsync_MomentsProvider_MomentsService_Iter2,
+    UserPerceivedLoadTime AS UserPerceivedLoadTime,
+    InputPaint AS InputPaint,
+    MetaOsLoad AS MetaOsLoad,
+    SessionsPaint AS SessionsPaint,
+    ZqPaint AS ZqPaint,
+    LuClassification  AS LuClassification ,
+    ChatMode  AS ChatMode ,
+    RealTimeConnection_DurationInMs  AS RealTimeConnection_DurationInMs ,
+    RealTimeConnection_SetupLatencyInMs  AS RealTimeConnection_SetupLatencyInMs ,
+    RealTimeConnection_Status  AS RealTimeConnection_Status ,
+    ExtensionExecutionFlow_ExtensionNames  AS ExtensionExecutionFlow_ExtensionNames ,
+    ExtensionExecutionFlow_ExtensionOutcomes  AS ExtensionExecutionFlow_ExtensionOutcomes ,
+    ExtensionExecutionFlow_Timestamps  AS ExtensionExecutionFlow_Timestamps ,
+    ClientInformation_DeviceOS AS ClientInformation_DeviceOS,
+    ClientInformation_DeviceType AS ClientInformation_DeviceType,
+    UserIdPUID  AS UserIdPUID ,
+    EndpointL1  AS EndpointL1 ,
+    EndpointL2  AS EndpointL2 ,
+    CustomInstructionUpsertResult AS CustomInstructionUpsertResult,
+    PersonalizationSettings AS PersonalizationSettings,
+    SkdsMetrics AS SkdsMetrics,
+    SSSRequests AS SSSRequests,
+    SydneyLatency AS SydneyLatency,
+    MeteringCheckResponse AS MeteringCheckResponse,
+    ClientLatency AS ClientLatency,
+    ChatPlusPages AS ChatPlusPages,
+    ClientInformation AS ClientInformation,
+    LLMRequests AS LLMRequests,
+    BingRequests AS BingRequests,
+    ProductInformation AS ProductInformation,
+    AgentExtendedData AS AgentExtendedData,
+    ToolExecutionDetails AS ToolExecutionDetails,
+    RaiPoliciesConfiguration AS RaiPoliciesConfiguration,
+    SafetyRouterTriggered AS SafetyRouterTriggered,
+    ScorecardSessionId AS ScorecardSessionId,
+    FromCode AS FromCode,
+    FileExtensions AS FileExtensions,
+    IntentSegmentation AS IntentSegmentation,
+    R9Latency  AS R9Latency ,
+    IsAgentRuntime  AS IsAgentRuntime ,
+    AgentRuntime  AS AgentRuntime ,
+    PluginInvocations AS PluginInvocations,
+    Tone  AS Tone ,
+    RealtimeTurnResult AS RealtimeTurnResult,
+    FeedbackThumbsClicks AS FeedbackThumbsClicks,
+    ClientPreferences AS ClientPreferences,
+    RealtimeTurnPlaybackInterruption AS RealtimeTurnPlaybackInterruption,
+    OfficeCopilot AS OfficeCopilot,
+    RAIClassifiersTriggered AS RAIClassifiersTriggered,
+    AgentExtendedDataArray AS AgentExtendedDataArray,
+    Apis AS Apis,
+    IsDegradedResponse AS IsDegradedResponse,
+    DataverseRequests AS DataverseRequests,
+    SpawnedTaskIds AS SpawnedTaskIds,
+    VisualInsightsData AS VisualInsightsData,
+    DatasetCategory AS DatasetCategory,
+    BackgroundTaskData AS BackgroundTaskData,
+    TaskId AS TaskId,
+    LLMGroundingEntities AS LLMGroundingEntities,
+    ImageSourceBreakdown AS ImageSourceBreakdown,
+    EditableBlockGenerated AS EditableBlockGenerated,
+    MessageStreamingMetricsExecutionEvent AS MessageStreamingMetricsExecutionEvent,
+    SkillsInfo AS SkillsInfo,
+    ShoppingBerryForwardedProductCount AS ShoppingBerryForwardedProductCount,
+    CuaPluginInfo AS CuaPluginInfo,
+    LLMRequestsArray AS LLMRequestsArray,
+
+
+    // CUD Reflection Metrics
+    ReflectionMetricsStringMap AS ReflectionMetrics,
+    MyReaderHelper.GetReflectionMetricAsDouble(ReflectionMetricsStringMap, "session-success-rate:ssr_inferred_score") AS ssr_inferred_score,
+    MyReaderHelper.GetReflectionMetricAsBoolean(ReflectionMetricsStringMap, "session-success-rate:ssr_inferred_success") AS ssr_inferred_success,
+    MyReaderHelper.GetReflectionMetricAsBoolean(ReflectionMetricsStringMap, "session-success-rate:ssr_inferred_failure") AS ssr_inferred_failure,
+    MyReaderHelper.GetReflectionMetricAsDictionary(ReflectionMetricsStringMap, "session-success-rate:ssr_inferred_insights") AS ssr_inferred_insights,
+
+    // VIP identity flags
+    IsVIPUser AS IsVIPUser,
+    IsVIPTenant AS IsVIPTenant,
+
+    FromHistory_TurnLevelResponseActionsString AS FromHistory_TurnLevelResponseActionsString,
+    FromHistory_FeedbackActionList AS FromHistory_FeedbackActionList,
+    FromHistory_TurnCount AS FromHistory_TurnCount,
+
+    // Group flights, appended to end after stripping allocation ids
+    SydFlights AS SydFlights,
+    sssFlights AS sssFlights,
+    ClientFlights  AS ClientFlights ,
+
+    // Shadow A/B Specific Columns
+    Shadow_E2ENRR  AS Shadow_E2ENRR ,
+    Shadow_Availability  AS Shadow_Availability ,
+    Shadow_ChatFCFR  AS Shadow_ChatFCFR ,
+    Shadow_LLMReason  AS Shadow_LLMReason ,
+    Shadow_LLMReasonResponse  AS Shadow_LLMReasonResponse ,
+    Shadow_LLMReasonUserQuery  AS Shadow_LLMReasonUserQuery ,
+    Shadow_LLMResponse_FirstToken  AS Shadow_LLMResponse_FirstToken ,
+    Shadow_SydneyFCFR  AS Shadow_SydneyFCFR ,
+    Shadow_ChatLCFR  AS Shadow_ChatLCFR ,
+    Shadow_sssQueryAPI  AS Shadow_sssQueryAPI ,
+    Shadow_SydneyFCFR_NullFlag  AS Shadow_SydneyFCFR_NullFlag ,
+    Shadow_ChatFCFR_NullFlag  AS Shadow_ChatFCFR_NullFlag ,
+    Shadow_LLMReason_NullFlag  AS Shadow_LLMReason_NullFlag ,
+    Shadow_LLMReasonResponse_NullFlag  AS Shadow_LLMReasonResponse_NullFlag ,
+    Shadow_LLMReasonUserQuery_NullFlag  AS Shadow_LLMReasonUserQuery_NullFlag ,
+    Shadow_LLMResponse_FirstToken_NullFlag  AS Shadow_LLMResponse_FirstToken_NullFlag ,
+    Shadow_ChatLCFR_NullFlag  AS Shadow_ChatLCFR_NullFlag ,
+    Shadow_sssQueryAPI_NullFlag  AS Shadow_sssQueryAPI_NullFlag ,
+    Shadow_SydneyLLMFirstTokenLatency  AS Shadow_SydneyLLMFirstTokenLatency ,
+    Shadow_SydneyLLMFirstTokenLatency_NullFlag  AS Shadow_SydneyLLMFirstTokenLatency_NullFlag ,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel  AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel ,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag  AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponseModel_NullFlag ,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse  AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse ,
+    Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag  AS Shadow_SydneyLLMFirstTokenPreFirstTokenResponse_NullFlag ,
+    Shadow_LLMCriticalPathFirstTokenResponse  AS Shadow_LLMCriticalPathFirstTokenResponse ,
+    Shadow_LLMCriticalPathFirstTokenResponse_NullFlag  AS Shadow_LLMCriticalPathFirstTokenResponse_NullFlag ,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel  AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel ,
+    Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag  AS Shadow_SydneyLLMCriticalPathPreFirstTokenResponseModel_NullFlag ,
+    Shadow_LLMInputToken  AS Shadow_LLMInputToken ,
+    Shadow_LLMInputToken_NullFlag  AS Shadow_LLMInputToken_NullFlag ,
+    Shadow_LLMInputTokenInvokingFunction  AS Shadow_LLMInputTokenInvokingFunction ,
+    Shadow_LLMInputTokenInvokingFunction_NullFlag  AS Shadow_LLMInputTokenInvokingFunction_NullFlag ,
+    Shadow_LLMInputTokenResponding  AS Shadow_LLMInputTokenResponding ,
+    Shadow_LLMInputTokenResponding_NullFlag  AS Shadow_LLMInputTokenResponding_NullFlag ,
+    Shadow_LLMInputTokenInvokingFunction_Responding  AS Shadow_LLMInputTokenInvokingFunction_Responding ,
+    Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag  AS Shadow_LLMInputTokenInvokingFunction_Responding_NullFlag ,
+    Shadow_IsValidPair  AS Shadow_IsValidPair ,
+    // Intersected T/C Flight
+    Flight  AS Flight
+    FROM data;
+
+
+END;

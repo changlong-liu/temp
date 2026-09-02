@@ -1,0 +1,24 @@
+/* ---------------------------------------------------------------------------------------------------
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+     
+    Author: wexiong
+    Description: BizChat Online Data
+    Output: 1 row per turn
+
+------------------------------------------------------------------------------------------------------ */
+
+CREATE VIEW BizChatOnlineView
+PARAMS
+(
+    StartDateTime string,
+    EndDateTime string,
+    Sources string DEFAULT = "*",
+    Region string DEFAULT = "RoW",
+    IncludeEchoTraffic bool DEFAULT = false,
+    ContainsServerFlightsInfo bool DEFAULT = true,
+    CustomInput string DEFAULT = "/shares/exchange.storage.prod/local/"
+)
+USING BizChatOnlineView.BizChatOnlineViewResolver("-DataModelDefinition", "BizChatOnlineView.DataModelDefinition.xml");
+
+REFERENCE "BizChatOnlineView.dll";
+RESOURCE "BizChatOnlineView.DataModelDefinition.xml";

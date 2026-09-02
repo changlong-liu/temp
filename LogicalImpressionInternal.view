@@ -1,0 +1,79 @@
+CREATE VIEW LogicalImpressionViewInternal
+PARAMS 
+(
+    StartDate string,
+    EndDate string,
+    FlightList string DEFAULT = string.Empty,
+    UseSampleData bool DEFAULT = false,
+    FlightAppId string DEFAULT = "Search",    
+    CustomInput string DEFAULT = "shares/exchange.storage.prod/local",
+    CustomDependency string DEFAULT = string.Empty,
+    ExcludeTestTraffic bool DEFAULT = true,
+    OutlookEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    ComposeEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    TeamsEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    EdgeEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    TranscriptEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    UnionEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    MsoEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    RecommendationsEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    OAEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    PeopleInTaskbarEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    FilesInTaskbarEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    CopilotSearchEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    MiscEntryPointsFromSlowStream string DEFAULT = string.Empty,
+    OutlookEntryPointsFromFastStream string DEFAULT = string.Empty,
+    ComposeEntryPointsFromFastStream string DEFAULT = string.Empty,
+    TeamsEntryPointsFromFastStream string DEFAULT = string.Empty,
+    EdgeEntryPointsFromFastStream string DEFAULT = string.Empty,
+    TranscriptEntryPointsFromFastStream string DEFAULT = string.Empty,
+    UnionEntryPointsFromFastStream string DEFAULT = string.Empty,
+    MsoEntryPointsFromFastStream string DEFAULT = string.Empty,
+    RecommendationsEntryPointsFromFastStream string DEFAULT = string.Empty,
+    OAEntryPointsFromFastStream string DEFAULT = string.Empty,
+    PeopleInTaskbarEntryPointsFromFastStream string DEFAULT = string.Empty,
+    FilesInTaskbarEntryPointsFromFastStream string DEFAULT = string.Empty,
+    CopilotSearchEntryPointsFromFastStream string DEFAULT = string.Empty,
+    MiscEntryPointsFromFastStream string DEFAULT = string.Empty,
+    QueryFullMiscFastStream bool DEFAULT = false,  // fast misc stream is not whitelisted, this is using for the case to get full data from misc stream when entrypoints are empty
+    UseFast24HoursUnionStream bool DEFAULT = false,
+    UseCopilotSearch24HoursUnionStream bool DEFAULT = false,
+    UseCopilotSearch24HoursUnionNrtStream bool DEFAULT = false,
+    UseCopilotSearch24HoursNrtStream bool DEFAULT = false,
+    EnableNrt bool DEFAULT = false,
+    ComputedConversationIdEnabledEntryPointList string DEFAULT = string.Empty
+)
+USING DynamicViewResolver("-C", "LogicalImpressionViewInternal.PipelineConfig.xml");
+
+#DECLARE ImpressionViewSharedModuleFile string = "ImpressionViewShared.module"; 
+
+// CustomInput should be set as "abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local" when query data in Blueshift
+#IF (@CustomInput.StartsWith("abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local")  || @CustomInput.StartsWith("abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local"))
+    #IF (string.IsNullOrEmpty(@CustomDependency))
+        #SET CustomDependency = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/";
+    #ENDIF
+    #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU.module";
+// CustomInput via EU office adhoc corp share path
+#ELSEIF (@CustomInput.StartsWith("abfss://substrateadlsg2neuprod-share@neuofficeadhoccorp.dfs.core.windows.net/substrateadlsg2neuprod/filesystem/local"))
+    #IF (string.IsNullOrEmpty(@CustomDependency))
+        #SET CustomDependency = @CustomInput + "/MSAI/SSS/NoBond/";
+    #ENDIF
+    #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU_CorpShare.module";
+#ENDIF
+
+// references
+//Remove "LogicalImpressionViewInternal.module" and separate them due to supporting DiffDoctor validation pipeline
+#DECLARE ImpressionViewSharedModule string;
+
+#IF (!string.IsNullOrEmpty(@CustomDependency))
+    #SET ImpressionViewSharedModule = @CustomDependency + @"Shared/" + @ImpressionViewSharedModuleFile; 
+#ELSE
+   #SET ImpressionViewSharedModule = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/Shared/" + @ImpressionViewSharedModuleFile;
+#ENDIF
+
+MODULE @ImpressionViewSharedModule;
+REFERENCE @"Microsoft.DataMining.Office.LogicalImpressionViewInternal.dll";
+RESOURCE @"LogicalImpressionViewInternal.PipelineConfig.xml";
+RESOURCE @"LogicalImpressionViewInternal.mapping";
+
+USING Microsoft.DataMining.NoBond.CommonDataPlatform;

@@ -1,0 +1,249 @@
+CREATE VIEW LogicalImpressionView
+PARAMS 
+(
+    StartDate string,
+    EndDate string,
+    EntryPoints string DEFAULT = string.Empty,
+    FlightList string DEFAULT = string.Empty,
+    UseSampleData bool DEFAULT = false,
+    FlightAppId string DEFAULT = "Search",
+    CustomInput string DEFAULT = "shares/exchange.storage.prod/local",
+    CustomFastEntryPoints string DEFAULT = "",
+    CustomDependency string DEFAULT = string.Empty,
+    ExcludeTestTraffic bool DEFAULT = true,
+    ComputedConversationIdEnabledEntryPointList string DEFAULT = string.Empty,
+    EUCutOffEnable bool DEFAULT = false,
+    IsEnableBond bool DEFAULT = false,
+    DisableDependency string DEFAULT = string.Empty,
+    EnableNrt bool DEFAULT = false
+)
+USING OdinImpressionViewResolver.OdinLogicalImpressionViewResolver("-PipelineConfig", "LogicalImpressionView.PipelineConfig.xml", "-DataModelDefinition", "LogicalImpressionViewInternal.DataModelDefinition.xml");
+
+
+#IF (@IsEnableBond == false)
+
+    #DECLARE ImpressionViewSharedModuleFile string = "ImpressionViewShared.module";
+    #DECLARE EXOVariantConfigMappingPathRoot string = "/shares/exchange.storage.prod/local";
+
+    // CustomInput should be set as "abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local" when query data in Blueshift
+    #IF (@CustomInput.StartsWith("abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local")  || @CustomInput.StartsWith("abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local"))
+        #IF (string.IsNullOrEmpty(@CustomDependency))
+            #SET CustomDependency = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/NoBond/";
+        #ENDIF
+        #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU.module";
+        #SET EXOVariantConfigMappingPathRoot = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local";
+    // CustomInput via EU office adhoc corp share path
+    #ELSEIF (@CustomInput.StartsWith("abfss://substrateadlsg2neuprod-share@neuofficeadhoccorp.dfs.core.windows.net/substrateadlsg2neuprod/filesystem/local"))
+        #IF (string.IsNullOrEmpty(@CustomDependency))
+            #SET CustomDependency = @CustomInput + "/MSAI/SSS/NoBond/";
+        #ENDIF
+        #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU_CorpShare.module";
+        #SET EXOVariantConfigMappingPathRoot = @CustomInput;
+    #ENDIF
+
+    #DECLARE OdinImpressionViewResolverSharedDll string;
+    #DECLARE ImpressionViewSharedModule string;
+    #DECLARE NewtonsoftJsonDll string;
+    #DECLARE OdinLogicalImpressionViewResolverDll string;
+    #DECLARE MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll string;
+    #DECLARE LogicalImpressionViewInternalPipelineConfigXML string;
+    #DECLARE LogicalImpressionViewInternalMapping string;
+    #DECLARE LogicalImpressionViewPipelineConfigXML string;
+    #DECLARE LogicalImpressionViewInternalDataModelDefinitionXML string;
+    #DECLARE LogicalImpressionInternalView string;
+
+    #IF (string.IsNullOrEmpty(@CustomDependency))
+        #SET CustomDependency = "/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/";
+        #SET OdinImpressionViewResolverSharedDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/Shared/OdinImpressionViewResolverShared.dll";
+        #SET ImpressionViewSharedModule = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/Shared/" + @ImpressionViewSharedModuleFile;
+        #SET NewtonsoftJsonDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/Shared/Newtonsoft.Json.dll";
+        #SET OdinLogicalImpressionViewResolverDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/OdinLogicalImpressionViewResolver.dll";
+        #SET MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/Microsoft.DataMining.Office.LogicalImpressionViewInternal.dll";
+        #SET LogicalImpressionViewInternalPipelineConfigXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpressionViewInternal.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalMapping = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpressionViewInternal.mapping";
+        #SET LogicalImpressionViewPipelineConfigXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpressionView.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalDataModelDefinitionXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpressionViewInternal.DataModelDefinition.xml";
+        #SET LogicalImpressionInternalView = @"/shares/exchange.storage.prod/local/MSAI/SSS/NoBond/LogicalImpression/LogicalImpressionInternal.view";
+    #ELSE
+        #SET OdinImpressionViewResolverSharedDll = @CustomDependency + @"Shared/OdinImpressionViewResolverShared.dll";
+        #SET ImpressionViewSharedModule = @CustomDependency + @"Shared/" + @ImpressionViewSharedModuleFile;
+        #SET NewtonsoftJsonDll = @CustomDependency + @"Shared/Newtonsoft.Json.dll";
+        #SET OdinLogicalImpressionViewResolverDll = @CustomDependency + @"LogicalImpression/OdinLogicalImpressionViewResolver.dll";
+        #SET MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll = @CustomDependency + @"LogicalImpression/Microsoft.DataMining.Office.LogicalImpressionViewInternal.dll";
+        #SET LogicalImpressionViewInternalPipelineConfigXML = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalMapping = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.mapping";
+        #SET LogicalImpressionViewPipelineConfigXML = @CustomDependency + @"LogicalImpression/LogicalImpressionView.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalDataModelDefinitionXML = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.DataModelDefinition.xml";
+        #SET LogicalImpressionInternalView = @CustomDependency + @"LogicalImpression/LogicalImpressionInternal.view";
+    #ENDIF
+
+    //Remove "LogicalImpressionViewInternal.module" and separate them due to supporting DiffDoctor validation pipeline
+
+    MODULE @ImpressionViewSharedModule;
+
+    REFERENCE @OdinImpressionViewResolverSharedDll;
+    #IF (NOT @DisableDependency.ToLowerInvariant().Split(';').Contains("newtonsoft.json.dll"))
+        REFERENCE @NewtonsoftJsonDll;
+    #ENDIF
+    REFERENCE @OdinLogicalImpressionViewResolverDll;
+    REFERENCE @MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll;
+
+    RESOURCE @LogicalImpressionViewInternalPipelineConfigXML;
+    RESOURCE @LogicalImpressionViewInternalMapping;
+    RESOURCE @LogicalImpressionViewPipelineConfigXML;
+    RESOURCE @LogicalImpressionViewInternalDataModelDefinitionXML;
+    RESOURCE @LogicalImpressionInternalView;
+
+    USING OdinImpressionViewResolver;
+    USING Microsoft.DataMining.NoBond.CommonDataPlatform;
+#ELSE
+    #DECLARE ImpressionViewSharedModuleFile string = "ImpressionViewShared.module";
+    #DECLARE EXOVariantConfigMappingPathRoot string = "/shares/exchange.storage.prod/local";
+
+    // CustomInput should be set as "abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local" when query data in Blueshift
+    #IF (@CustomInput.StartsWith("abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local")  || @CustomInput.StartsWith("abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local"))
+        #IF (string.IsNullOrEmpty(@CustomDependency))
+            #SET CustomDependency = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/SSS/";
+        #ENDIF
+        #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU.module";
+        #SET EXOVariantConfigMappingPathRoot = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local";
+    // CustomInput via EU office adhoc corp share path
+    #ELSEIF (@CustomInput.StartsWith("abfss://substrateadlsg2neuprod-share@neuofficeadhoccorp.dfs.core.windows.net/substrateadlsg2neuprod/filesystem/local"))
+        #IF (string.IsNullOrEmpty(@CustomDependency))
+            #SET CustomDependency = @CustomInput + "/MSAI/SSS/";
+        #ENDIF
+        #SET ImpressionViewSharedModuleFile = "ImpressionViewShared_EU_CorpShare.module";
+        #SET EXOVariantConfigMappingPathRoot = @CustomInput;
+    #ENDIF
+
+    #DECLARE OdinImpressionViewResolverSharedDll string;
+    #DECLARE ImpressionViewSharedModule string;
+    #DECLARE OdinLogicalImpressionViewResolverDll string;
+    #DECLARE MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll string;
+    #DECLARE LogicalImpressionViewInternalPipelineConfigXML string;
+    #DECLARE LogicalImpressionViewInternalMapping string;
+    #DECLARE LogicalImpressionViewPipelineConfigXML string;
+    #DECLARE LogicalImpressionViewInternalDataModelDefinitionXML string;
+    #DECLARE LogicalImpressionInternalView string;
+
+    #IF (string.IsNullOrEmpty(@CustomDependency))
+        #SET CustomDependency = "/shares/exchange.storage.prod/local/MSAI/SSS/";
+        #SET OdinImpressionViewResolverSharedDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/Shared/OdinImpressionViewResolverShared.dll";
+        #SET ImpressionViewSharedModule = @"/shares/exchange.storage.prod/local/MSAI/SSS/Shared/" + @ImpressionViewSharedModuleFile;
+        #SET OdinLogicalImpressionViewResolverDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/OdinLogicalImpressionViewResolver.dll";
+        #SET MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/Microsoft.DataMining.Office.LogicalImpressionViewInternal.dll";
+        #SET LogicalImpressionViewInternalPipelineConfigXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/LogicalImpressionViewInternal.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalMapping = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/LogicalImpressionViewInternal.mapping";
+        #SET LogicalImpressionViewPipelineConfigXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/LogicalImpressionView.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalDataModelDefinitionXML = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/LogicalImpressionViewInternal.DataModelDefinition.xml";
+        #SET LogicalImpressionInternalView = @"/shares/exchange.storage.prod/local/MSAI/SSS/LogicalImpression/LogicalImpressionInternal.view";
+    #ELSE
+        #SET OdinImpressionViewResolverSharedDll = @CustomDependency + @"Shared/OdinImpressionViewResolverShared.dll";
+        #SET ImpressionViewSharedModule = @CustomDependency + @"Shared/" + @ImpressionViewSharedModuleFile;
+        #SET OdinLogicalImpressionViewResolverDll = @CustomDependency + @"LogicalImpression/OdinLogicalImpressionViewResolver.dll";
+        #SET MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll = @CustomDependency + @"LogicalImpression/Microsoft.DataMining.Office.LogicalImpressionViewInternal.dll";
+        #SET LogicalImpressionViewInternalPipelineConfigXML = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalMapping = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.mapping";
+        #SET LogicalImpressionViewPipelineConfigXML = @CustomDependency + @"LogicalImpression/LogicalImpressionView.PipelineConfig.xml";
+        #SET LogicalImpressionViewInternalDataModelDefinitionXML = @CustomDependency + @"LogicalImpression/LogicalImpressionViewInternal.DataModelDefinition.xml";
+        #SET LogicalImpressionInternalView = @CustomDependency + @"LogicalImpression/LogicalImpressionInternal.view";
+    #ENDIF
+
+    //Remove "LogicalImpressionViewInternal.module" and separate them due to supporting DiffDoctor validation pipeline
+
+    MODULE @ImpressionViewSharedModule;
+
+    REFERENCE @OdinImpressionViewResolverSharedDll;
+    REFERENCE @OdinLogicalImpressionViewResolverDll;
+    REFERENCE @MicrosoftDataMiningOfficeLogicalImpressionViewInternalDll;
+
+    RESOURCE @LogicalImpressionViewInternalPipelineConfigXML;
+    RESOURCE @LogicalImpressionViewInternalMapping;
+    RESOURCE @LogicalImpressionViewPipelineConfigXML;
+    RESOURCE @LogicalImpressionViewInternalDataModelDefinitionXML;
+    RESOURCE @LogicalImpressionInternalView;
+
+    USING OdinImpressionViewResolver;
+    USING Microsoft.DataMining.CommonDataPlatform;
+#ENDIF
+
+#IF (NOT string.IsNullOrEmpty(@FlightList))
+    #IF (@CustomInput.StartsWith("abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local")  || @CustomInput.StartsWith("abfs://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local"))
+        RESOURCE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/Views/VariantConfig/Pre/NoLegacy/FlightVariantConfigViewNoLegacy.view";
+        REFERENCE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/DataInsightShare/DataMining.Office.DataAPI.Interfaces.dll";
+        REFERENCE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/DataInsightShare/DataMining.Office.ViewLogic.InternalUtilities.dll";
+        REFERENCE @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/Views/VariantConfig/Pre/NoLegacy/SOTELS.DataInsight.VariantConfig.dll";
+        REFERENCE "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/Projects/DataInsight/DataInsightShare/OfficeDataEmail.DataAPI.dll";
+        USING Microsoft.DataMining.Odin.Email.DataTypes;
+    // CustomInput via EU office adhoc corp share path
+    #ELSEIF (@CustomInput.StartsWith("abfss://substrateadlsg2neuprod-share@neuofficeadhoccorp.dfs.core.windows.net/substrateadlsg2neuprod/filesystem/local"))
+        #DECLARE AdhocFlightVariantConfigView string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/Views/VariantConfig/Pre/NoLegacy/FlightVariantConfigViewNoLegacy.view";
+        #DECLARE AdhocDataAPIInterfacesDll string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/DataInsightShare/DataMining.Office.DataAPI.Interfaces.dll";
+        #DECLARE AdhocViewLogicUtilitiesDll string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/DataInsightShare/DataMining.Office.ViewLogic.InternalUtilities.dll";
+        #DECLARE AdhocVariantConfigDll string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/Views/VariantConfig/Pre/NoLegacy/SOTELS.DataInsight.VariantConfig.dll";
+        #DECLARE AdhocEmailDataAPIDll string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/DataInsightShare/OfficeDataEmail.DataAPI.dll";
+        RESOURCE @AdhocFlightVariantConfigView;
+        REFERENCE @AdhocDataAPIInterfacesDll;
+        REFERENCE @AdhocViewLogicUtilitiesDll;
+        REFERENCE @AdhocVariantConfigDll;
+        REFERENCE @AdhocEmailDataAPIDll;
+        USING Microsoft.DataMining.Odin.Email.DataTypes;
+    #ELSE
+        RESOURCE @"/shares/exchange.storage.prod/local/Projects/DataInsight/Views/VariantConfig/FlightVariantConfigView.view";
+        REFERENCE @"/shares/exchange.storage.prod/local/Projects/DataInsight/DataInsightShare/DataMining.Office.DataAPI.Interfaces.dll";
+        REFERENCE @"/shares/exchange.storage.prod/local/Projects/DataInsight/DataInsightShare/DataMining.Office.ViewLogic.InternalUtilities.dll";
+        REFERENCE @"/shares/exchange.storage.prod/local/Projects/DataInsight/DataInsightShare/Bond.Attributes.dll";
+        REFERENCE @"/shares/exchange.storage.prod/local/Projects/DataInsight/DataInsightShare/SOTELS.DataInsight.VariantConfig.dll";
+
+        #DECLARE DataMiningOfficeDataTypesShared_pdb string = "/shares/exchange.storage.prod/local/Resources/Odin/OdinShared/DataMining.Office.DataTypes.Shared.pdb";
+        #IF (EXISTS(@DataMiningOfficeDataTypesShared_pdb))
+            RESOURCE @DataMiningOfficeDataTypesShared_pdb;
+        #ELSE
+            RESOURCE "DataMining.Office.DataTypes.Shared.pdb";
+        #ENDIF
+
+        #DECLARE MicrosoftBond_pdb string = "/shares/exchange.storage.prod/local/Resources/Odin/OdinShared/Microsoft.Bond.pdb";
+        #IF (EXISTS(@MicrosoftBond_pdb))
+            RESOURCE @MicrosoftBond_pdb;
+        #ELSE
+            RESOURCE "Microsoft.Bond.pdb";
+        #ENDIF
+
+        #DECLARE MicrosoftBondInterfaces_pdb string = "/shares/exchange.storage.prod/local/Resources/Odin/OdinShared/Microsoft.Bond.Interfaces.pdb";
+        #IF (EXISTS(@MicrosoftBondInterfaces_pdb))
+            RESOURCE @MicrosoftBondInterfaces_pdb;
+        #ELSE
+            RESOURCE "Microsoft.Bond.Interfaces.pdb";
+        #ENDIF
+
+        #DECLARE OfficeDataEmailDataAPI_pdb string = "/shares/exchange.storage.prod/local/Resources/Odin/OdinShared/OfficeDataEmail.DataAPI.pdb";
+        #IF (EXISTS(@OfficeDataEmailDataAPI_pdb))
+            RESOURCE @OfficeDataEmailDataAPI_pdb;
+        #ELSE
+            RESOURCE "/shares/OBD.prod/local/Odin/Email/OfficeDataEmail.DataAPI.pdb";
+        #ENDIF
+        
+        #DECLARE OfficeDataEmailDataAPI_dll string = "/shares/exchange.storage.prod/local/Projects/DataInsight/DataInsightShare/OfficeDataEmail.DataAPI.dll";
+        #IF (EXISTS(@OfficeDataEmailDataAPI_dll))
+            REFERENCE @OfficeDataEmailDataAPI_dll;
+        #ELSE
+            REFERENCE "/shares/OBD.prod/local/Odin/Email/OfficeDataEmail.DataAPI.dll";
+        #ENDIF
+        USING Microsoft.DataMining.Odin.Email.DataTypes;
+    #ENDIF
+
+    #IF (NOT string.IsNullOrEmpty(@EndDate))
+        #DECLARE EXOVariantConfigMappingResourceDateTime DateTime = DateTime.Parse(@EndDate).Date;
+        #DECLARE EXOVariantConfigMappingPath_Pattern string = @EXOVariantConfigMappingPathRoot + "/Projects/DataInsight/Datasets/FlightVariantConfig/VariantConfigFlightMapping/{0:yyyy\\/MM}/";
+        #DECLARE EXOVariantConfigMappingFileName_Pattern string = "TSV_VariantConfigFlightMapping_{0:yyyy_MM_dd}.tsv";
+        #DECLARE EXOVariantConfigMappingPath_ResourceDate string = string.Format(@EXOVariantConfigMappingPath_Pattern, @EXOVariantConfigMappingResourceDateTime);
+        #DECLARE EXOVariantConfigMappingFileName_ResourceDate string = string.Format(@EXOVariantConfigMappingFileName_Pattern, @EXOVariantConfigMappingResourceDateTime);
+        #DECLARE EXOVariantConfigMappingFullPath string = @EXOVariantConfigMappingPath_ResourceDate + @EXOVariantConfigMappingFileName_ResourceDate;
+    
+        #IF (EXISTS(@EXOVariantConfigMappingFullPath))
+            RESOURCE @EXOVariantConfigMappingFullPath;
+        #ELSE
+            #ERROR string.Format("{0} doen't exist!", @EXOVariantConfigMappingFullPath);
+        #ENDIF      
+    #ENDIF
+#ENDIF

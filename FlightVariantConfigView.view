@@ -1,0 +1,82 @@
+// DO NOT MODIFY templateVersion=bc5b7da0-ff7b-403c-9f1f-a93804ecaf2c
+// ICM 
+CREATE VIEW FlightVariantConfigView
+SCHEMA
+(
+    UserId : string,
+    UserType : string,
+    UserIdSpace : string,
+    OMSTenantId : string,
+    Flights : System.Collections.Generic.List<SOTELS.DataInsight.VariantConfig.DataTypes.Flight>,
+    DataSource : string,
+    Office365Category : string
+)
+PARAMS
+(
+    StartTime string,
+    EndTime string,
+    Office365Instance string DEFAULT = "worldwide",
+    DataSource string DEFAULT = "VariantConfig",
+    FlightList string DEFAULT = "",
+    UsePUIDForConsumerData bool DEFAULT = true,
+    Category string DEFAULT = "Commercial,Consumer",
+    AppId string DEFAULT = "",
+    AppIdsCaseSensitivity bool DEFAULT = true,
+    Region string DEFAULT = "ROW"
+)
+USING SOTELS.DataInsight.VariantConfig.FlightVC.OfficeFlightVariantConfigResolver(
+"ViewName", "FlightVariantConfigView");
+
+//------------------------references--------------------------
+
+
+
+// START BUSINESS LOGIC. Edit below this line
+
+#IF (@Region.Contains("EU"))
+    #DECLARE RegionPrefix string = "abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net";
+#ELSE
+    #DECLARE RegionPrefix string = "/shares/exchange.storage.prod";
+#ENDIF
+
+ #DECLARE DataSharedPath string = "/local/Projects/DataInsight/DataInsightShare";
+
+REFERENCE @RegionPrefix + @DataSharedPath + "/Microsoft.Bond.dll";
+REFERENCE @RegionPrefix + @DataSharedPath + "/Microsoft.Bond.Interfaces.dll";
+REFERENCE @RegionPrefix + @DataSharedPath + "/Microsoft.Live.Json.dll";
+REFERENCE @RegionPrefix + @DataSharedPath + "/Bond.Attributes.dll";
+REFERENCE @RegionPrefix + @DataSharedPath + "/SOTELS.DataInsight.VariantConfig.dll";
+
+#IF (@DataSource != "VariantConfig")
+    #ERROR ("The DataSource of 'FlightVariantConfigView' is (VariantConfig). If you want to use the (OWAClientSession) as the datasource, please call the View: 'FlightAssignmentView'");
+#ENDIF
+
+#IF (NOT @UsePUIDForConsumerData)
+    #ERROR("'UsePUIDForConsumerData' is deprecated as ANID data is not supported anymore");
+#ENDIF
+
+#IF (NOT string.IsNullOrEmpty(@EndTime))
+    #DECLARE EXOVariantConfigMappingResourceDateTime DateTime = DateTime.Parse(@EndTime).Date;
+    // The path of tsv file VariantConfigFlightMapping
+    #DECLARE EXOVariantConfigMappingPath_Pattern string = "/local/Projects/DataInsight/Datasets/FlightVariantConfig/VariantConfigFlightMapping/{0:yyyy\\/MM}/";
+    
+    #DECLARE EXOVariantConfigMappingFileName_Pattern string = "TSV_VariantConfigFlightMapping_{0:yyyy_MM_dd}.tsv";
+
+    #DECLARE EXOVariantConfigMappingPath_ResourceDate string = string.Format(@EXOVariantConfigMappingPath_Pattern, @EXOVariantConfigMappingResourceDateTime);
+    #DECLARE EXOVariantConfigMappingFileName_ResourceDate string = string.Format(@EXOVariantConfigMappingFileName_Pattern, @EXOVariantConfigMappingResourceDateTime);
+
+    // Get the EXOVariantConfigMappingFullPath
+    #DECLARE EXOVariantConfigMappingFullPath string = @RegionPrefix + @EXOVariantConfigMappingPath_ResourceDate + @EXOVariantConfigMappingFileName_ResourceDate;
+    
+    #IF (EXISTS(@EXOVariantConfigMappingFullPath))
+        RESOURCE @EXOVariantConfigMappingFullPath;
+    #ELSE
+        #ERROR string.Format("{0} doen't exist!", @EXOVariantConfigMappingFullPath);
+    #ENDIF
+#ENDIF
+
+USING SOTELS.DataInsight.VariantConfig;
+USING SOTELS.DataInsight.VariantConfig.DataTypes;
+USING SOTELS.DataInsight.VariantConfig.ViewLogic;
+
+// END BUSINESS LOGIC. Edit above this line

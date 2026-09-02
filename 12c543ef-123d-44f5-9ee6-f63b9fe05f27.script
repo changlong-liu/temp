@@ -584,6 +584,7 @@ PARAMS (StartDate = "2026-08-25", EndDate = "2026-08-25", TreatmentAssignmentDat
             
 ;
 
+            [PARTITION = (PARTITIONCOUNT =  4000)]
             DoNothingReducerScript = 
             REDUCE MVCompactionProcessorScript
             ON FLIGHT,RAWMUID PRESORT FLIGHT ASC,RAWMUID ASC,SESSION_ID ASC,LOGICAL_ID ASC,IG ASC
@@ -592,6 +593,7 @@ PARAMS (StartDate = "2026-08-25", EndDate = "2026-08-25", TreatmentAssignmentDat
             
 ;
 
+            [PARTITION = (PARTITIONCOUNT =  4000)]
             MVAggregateProcessorScript = PROCESS DoNothingReducerScript
             PRODUCE *
             USING MVAggregateProcessor("2")

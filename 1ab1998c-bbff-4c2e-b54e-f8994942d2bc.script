@@ -1283,7 +1283,8 @@ Newtonsoft.Json.Linq.JArray.Parse(LLMRequests).Where(x => x.Value<string>("Model
                 && obj.ContainsKey("Latency")
                 && obj["Latency"] != null)
             .Select(obj => float.Parse(!string.IsNullOrEmpty(obj["Latency"].ToString()) ? obj["Latency"].ToString() : "-1"))
-            .Where(latency => latency > 0))
+            .Where(latency => latency > 0)
+            .ToArray())
         .Select(latencies => latencies.Count() > 0
             ? (float?)(latencies.Sum() / latencies.Count())
             : (float?)null)
@@ -1300,7 +1301,8 @@ Newtonsoft.Json.Linq.JArray.Parse(LLMRequests).Where(x => x.Value<string>("Model
                 && obj.ContainsKey("Latency")
                 && obj["Latency"] != null)
             .Select(obj => float.Parse(!string.IsNullOrEmpty(obj["Latency"].ToString()) ? obj["Latency"].ToString() : "-1"))
-            .Where(latency => latency > 0))
+            .Where(latency => latency > 0)
+            .ToArray())
         .Select(latencies => latencies.Count() > 0
             ? (float?)(latencies.Sum() / latencies.Count())
             : (float?)null)

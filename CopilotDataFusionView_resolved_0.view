@@ -567,7 +567,8 @@ UsageData =
         SELECT
             *.Except(__date),
             __date.ToString("yyyy-MM-dd") AS ScoreDayTime
-        FROM ScoreDataDaily;
+        FROM ScoreDataDaily
+        WHERE !string.IsNullOrEmpty(RequestId);
     
         ScoreData = SELECT * FROM ScoreDataDaily;
     
@@ -639,11 +640,6 @@ UsageData =
         FROM ScoreData
         WHERE !string.IsNullOrEmpty(ScoreWithSlicerData_NormalizedRequestId);
 
-    ScoreDataNotToJoin =
-        SELECT *
-        FROM ScoreData
-        WHERE string.IsNullOrEmpty(ScoreWithSlicerData_NormalizedRequestId);
-
     // Join key: RequestId
     
     
@@ -660,12 +656,7 @@ UsageData =
     FusionData =
         SELECT
             *,
-            IF(
-                ScoreWithSlicerData_NormalizedRequestId != NULL 
-                AND NormalizedRequestId == NULL, 
-                true, 
-                false
-            ) AS IsOnlyScoreData
+            false AS IsOnlyScoreData
         FROM FusionData;
       #ELSE
      RAISE ERROR ("Invalid parameter combination: 'ScoreLeftJoinUsage' or 'ScoreRightJoinUsage' join for ScoreDataJoinType is only supported when ConsumptionMode does not include 'onlyedps'. Please adjust parameters accordingly.");

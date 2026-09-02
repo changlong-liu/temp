@@ -28,6 +28,20 @@ All output metrics, segments, paths, headers, unions, histograms, reducer keys, 
 - Folded 27 constant expressions and two redundant empty checks.
 - Kept all consumed Bootstrap and Histogram calculations.
 
+### View-informed recheck
+
+After tracing the scripts through the downloaded Views, three additional safe simplifications were applied:
+
+- Search removed an empty-flight regex predicate that was exactly duplicated by the following `!= ""` check. This
+  eliminates one regex evaluation and two `StandardizedFlightParser` calls per candidate row.
+- Search combined the separate null and empty `RandomizationId` checks into `string.IsNullOrEmpty`.
+- BizChat now filters and computes the maximum valid Dataverse latency in one pass. The previous expression first used
+  `Any` and then enumerated the same parsed array again to calculate `Max`.
+
+The existing View parameters cannot express the two BizChat exclusions for `AugmentationLoop` and
+`OutlookOnCanvasConversationHistory`. Changing those parameters, flight handling, or date filtering could alter rows,
+so those filters remain unchanged.
+
 ## Results
 
 | Measurement | Before | After | Reduction |
@@ -40,6 +54,9 @@ All output metrics, segments, paths, headers, unions, histograms, reducer keys, 
 | BizChat `JArray.Parse` calls | 156 | 150 | 6 |
 | BizChat `ToLower()` calls | 62 | 0 | 62 |
 | BizChat `FilteredInput` rowsets | 1 | 0 | 1 |
+
+The View-informed recheck additionally reduced the current Search script by 452 bytes and the current BizChat script
+by 285 bytes relative to their last committed versions.
 
 Compared with the original generated files, the cumulative parsing counts in the BizChat script changed as follows:
 

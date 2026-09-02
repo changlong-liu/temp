@@ -1910,15 +1910,11 @@ Scenario != "PowerAppsSidepaneWorkCopilot"
   ? new[] { Newtonsoft.Json.Linq.JArray.Parse(DataverseRequests) }
       .Select(requests =>
           requests
-              .Where(token => token is Newtonsoft.Json.Linq.JObject)
-              .Cast<Newtonsoft.Json.Linq.JObject>()
-              .Any(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
-            ? (long?)requests
-                .Where(token => token is Newtonsoft.Json.Linq.JObject)
-                .Cast<Newtonsoft.Json.Linq.JObject>()
-                .Where(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
-                .Max(obj => long.Parse(obj["Latency"].ToString()))
-            : (long?)null)
+              .OfType<Newtonsoft.Json.Linq.JObject>()
+              .Where(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
+              .Select(obj => (long?)long.Parse(obj["Latency"].ToString()))
+              .DefaultIfEmpty((long?)null)
+              .Max())
       .First()
   : (long?)null AS DataverseLatencyTotalMs_Turn,
 Scenario != "PowerAppsSidepaneWorkCopilot"

@@ -594,6 +594,7 @@ PARAMS (StartDate = "2026-08-25", EndDate = "2026-08-25", TreatmentAssignmentDat
             
 ;
 
+            [PARTITION=(PARTITIONCOUNT=4000, REQUIRED=true)]
             MVAggregateReducerScript = 
             REDUCE MVAggregateProcessorScript
             ON FLIGHT,Segment_Name_1,Segment_Value_1,Segment_Name_2,Segment_Value_2 

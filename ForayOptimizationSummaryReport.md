@@ -68,22 +68,68 @@ cannot be validated by static output comparison.
 The evidence confirms that wide join payload, repeated managed processing, late cardinality reduction, and memory
 underestimation are the main BizChat costs. Adding partitions would not address the measured bottleneck.
 
-No additional script or View edit met both requirements of exact output equivalence and no unvalidated physical-plan
-change. The earlier safe edits remain applicable and are listed above.
+No additional script or View edit met both requirements of exact output equivalence and no physical-plan change. The
+earlier safe edits remain applicable and are listed above.
+
+## Configured SCOPE changes
+
+These physical-plan changes are configured but have not been compiled or run.
+
+### Search final reducer partitioning
+
+A required 4,000-partition hint was added directly to `MVAggregateReducerScript`.
+
+Kusto showed that `SV339_Aggregate` sorted 2.49 billion rows, wrote 101.35 TiB, and used 35 to 37 spill buckets across
+1,519 completed outer reducer vertices. Its internal aggregation had a 14.25 input-skew ratio and was on the path that
+ended with `TempDataHeldBytesPerTokenLimitExceeded`.
+
+Earlier non-required partition hints were attached to PROCESS statements and were ignored. Placing the hint directly
+on the final reducer targets the measured sort boundary. `REQUIRED=true` ensures the flight tests the requested count
+rather than allowing the optimizer to ignore it again.
+
+The intended effect is smaller per-reducer sort input and earlier spill-partition completion. The risk is additional
+shuffle streams, scheduling overhead, merge fan-in, or even higher total temp data.
+
+### Search row-count estimate
+
+The active `ROWCOUNT=1000000000000` hint was removed from the Search Metric View.
+
+No measured cardinality supported one trillion rows at that statement. Compiler telemetry also estimated about 2,981
+bytes per final-stage row while operator telemetry measured about 44,703 bytes. A guessed row-count hint can distort
+costing without correcting this much larger row-width error.
+
+The hint was removed rather than replaced because the exact row count at that View boundary is unavailable. The three
+similar hints under the disabled `EnableLivDebug` branch remain unchanged.
+
+The risk is that the optimizer may choose a worse plan without the estimate. The compiled graph must therefore be
+compared for new global sorts, reduced parallelism, or adverse stage-count changes.
+
+### BizChat managed operator chaining
+
+The Fusion Metric View now sets `@@ManagedOperatorChain=true`.
+
+The View previously disabled chaining even though `SV217_Combine_Split` and `SV225_Aggregate` consumed 71.5% of
+accumulated active vertex time. Managed processing in `SV217` consumed about 6,926 exclusive hours, and `SV225`
+expanded 475.1 million rows into 9.50 billion managed row invocations.
+
+Chaining allows eligible adjacent managed projections to avoid some row materialization, serialization, and
+managed/native transitions. It does not guarantee that the compiler will fuse every processor.
+
+The risk is larger generated operators, longer object lifetimes, higher memory or GC pressure, and broader exception
+impact. The compiled plan must retain the same join and output branches, and runtime output must match the baseline.
+
+Search token allocation and BizChat VSC memory sizing remain external submission or scheduler settings. They were not
+encoded in the SCOPE files.
 
 ## Unimplemented opportunities
 
 | Priority | Opportunity | Reason deferred |
 |---|---|---|
-| P0 | Reduce Search final-aggregation temp data | Requires a new reducer/aggregation physical plan. |
-| P0 | Correct Search final-stage byte estimates | Requires compiler statistics or measured cardinality input. |
 | P0 | Push BizChat filters before the score join | Needs source parameters and matched output validation. |
 | P0 | Narrow fast-score data before the BizChat join | Needs column and plan validation. |
-| P0 | Chain or fuse managed BizChat processors | Changes execution boundaries. |
 | P1 | Fix `StripAllocationIds` and narrow flights | Can change flight values and selected rows. |
 | P1 | Correct BizChat hot-stage memory sizing | This is a scheduler/VSC change, not a safe script rewrite. |
 | P1 | Partition Search deduplication by `UserId, ImpressionId` | Changes shuffle and partition behavior. |
-| P1 | Remove or replace the Search trillion-row estimate | No reliable replacement cardinality is available locally. |
 | P1 | Tune Search final aggregation metadata | Needs cardinality, skew, and plan evidence. |
 | P2 | Narrow Search processor output | Opaque processors may need apparently unused columns. |
 | P2 | Consolidate Search traffic aggregations | Different keys require data-level proof. |

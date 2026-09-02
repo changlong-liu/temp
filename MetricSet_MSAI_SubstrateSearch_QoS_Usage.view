@@ -916,7 +916,6 @@ BEGIN
                EntryPoint.IndexOf('.') AS SplitIndex
         FROM data;
 
-    [ROWCOUNT=1000000000000] //edit
     data =
         SELECT RandomizationId,
                IF(@NoFlightFilter, ExternalDirectoryObjectId, UserId) AS UserId,

@@ -477,7 +477,7 @@ USING BizChatOnlineMetricSetView;
 #ENDIF
 REFERENCE @JSONPath;
 
-#SET @@ManagedOperatorChain = false;
+#SET @@ManagedOperatorChain = true;
     
 #IF(@EndDateTime == "")
     #SET EndDateTime = DateTime.SpecifyKind(DateTime.Parse(@StartDateTime),DateTimeKind.Utc).AddDays(1).ToString("yyyy-MM-dd HH:mm:ss");

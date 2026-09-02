@@ -852,7 +852,7 @@ BEGIN
             COUNTIF(RouteName=="suggestions") AS SuggestionsRequestCount,
             COUNTIF(RouteName=="suggestions" AND QueryLength == 0) AS EmptySuggestionsRequestCount,
             COUNTIF(RouteName=="query") AS QueryRequestCount,
-            COUNTIF(ResponseActions != null && ResponseActions.Actions != null && ResponseActions.Actions.Where(x => x.EventType.ToLower() != @SessionEnd).Count() > 0) AS RequestCountWithUserActions
+            COUNTIF(ResponseActions != null && ResponseActions.Actions != null && ResponseActions.Actions.Any(x => !x.EventType.Equals(@SessionEnd, StringComparison.OrdinalIgnoreCase))) AS RequestCountWithUserActions
         FROM data
         HAVING EmptySuggestionsRequestCount == 1 AND SuggestionsRequestCount == 1 AND QueryRequestCount == 0 AND RequestCountWithUserActions == 0;
         data = SELECT A.*
@@ -916,7 +916,6 @@ BEGIN
                EntryPoint.IndexOf('.') AS SplitIndex
         FROM data;
 
-    [ROWCOUNT=1000000000000] //edit
     data =
         SELECT RandomizationId,
                IF(@NoFlightFilter, ExternalDirectoryObjectId, UserId) AS UserId,

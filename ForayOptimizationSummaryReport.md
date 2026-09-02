@@ -36,17 +36,7 @@ treated as compatibility requirements.
 The edited Copilot Data Fusion View is a resolved job artifact. Its changes should ultimately be made in the source
 module that generates the resolved View.
 
-## Kusto investigation
-
-The complete telemetry pass used different stores for the two jobs:
-
-- Search QoS: West US `events-cosmos`
-- BizChat: North Europe `events-synapsescope`
-
-Neither store exposes a dedicated `JobGraph` table. Critical paths were reconstructed from `JobOperators`,
-`CriticalPathVertexEvent`, `CompilationStage`, vertex telemetry, and the downloaded View dependencies.
-
-### Search QoS
+## Search QoS telemetry
 
 - The job ran for 10 hours 11 minutes and failed with
   `E_USER_JM_AM_TempDataHeldBytesPerTokenLimitExceeded`.
@@ -62,7 +52,7 @@ The immediate problem is final metric aggregation and temp-data retention, not s
 Changing reducer fan-in, partitioning, row estimates, or metric aggregation shape would change the physical plan and
 cannot be validated by static output comparison.
 
-### BizChat
+## BizChat telemetry
 
 - The job succeeded in 18 hours 58 minutes of execution with 123,956 completed logical vertices.
 - `SV217_Combine_Split` and `SV225_Aggregate` consumed 71.5% of accumulated active vertex time.

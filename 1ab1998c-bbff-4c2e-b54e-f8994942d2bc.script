@@ -125,6 +125,76 @@ USING OnboardingCommonHelper;
 USING MDLConverters.UserDefinedObjects;
 
 
+// Apply source filters before generated metric expressions and JSON parsing.
+FilteredInput = SELECT
+AgentRuntime,
+AppName,
+AvailabilityState,
+BotConversationId,
+BotUsedReferences,
+ChatMode,
+chatsat_signal_inferred_dsat,
+chatsat_signal_inferred_sat,
+ChatSATS_OfficeRegion,
+CitationCount,
+ClientPlatform,
+ComputedServerSessionId,
+CopilotProduct,
+DataverseRequests,
+EditableBlockGenerated,
+ExtensionExecutionFlow_ExtensionNames,
+ExtensionExecutionFlow_ExtensionOutcomes,
+FeedbackThumbsClicks,
+Flight,
+IsBotOffensiveClassifierTriggered,
+IsBotResponseBlockListTriggered,
+IsCopyrightViolationTriggered,
+IsDisengaged,
+isSearchTriggered,
+IsUpiaUserMessageTriggered,
+IsUserMessageBlockListTriggered,
+IsXpiaToolOutputTriggered,
+LLMGroundingEntities,
+LLMRequests,
+Locale,
+NoApologyDetectedState,
+ObjectId,
+OrchestratorIterationCount,
+PersonalizationSettings,
+ProductInformation,
+QueryAnnotationTypes,
+R9Latency,
+RealTimeConnection_DurationInMs,
+RealTimeConnection_SetupLatencyInMs,
+RealTimeConnection_Status,
+RealtimeTurnResult,
+SafetyRouterTriggered,
+Scenario,
+ScorecardSessionId,
+SourceBranch,
+sssTotalRequests,
+sssTotalResultsCount,
+sssTotalSuccessfulRequests,
+TIMESTAMP,
+Tone,
+ToolExecutionDetails,
+TotalNumUserMessages,
+TurnId,
+TurnLevelResponseActionsString,
+TurnLevelSystemActionsString,
+TurnType,
+UsedEntityAnnotations,
+UtteranceLength
+FROM (VIEW @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/BizChatOnline/MetricSet/Fusion_MetricSet_BizChatOnline.view" PARAMS (StartDateTime="2026-08-19T00:00:00",EndDateTime="2026-08-25T23:59:59",Flights="pr1785838c5:1334764|pr17858386:1334763",Region="EU",ManagementGroup="o365substratenorthstarbizchatservice",TrafficFiltersDeployRing="{TrafficFilters.DeployRing}",TrafficFiltersCosmicPartition="{TrafficFilters.Partition}",IncludeFeedback=false,IncludeScores=false,PropagateFlightToAllTurns=false,MetaOSFilter=false,IsEchoExperiment=false,FilterPassiveUsers=true,CustomInput="",StripAllocationIds=true,Variant3SFlightOverride=false,TreatmentAssignmentDataSource="odinvariantconfigv2",ConsumptionMode="Daily,IncludeServerSessionId,IncludeFeedback",IncludeFastScores=true,IncludeCatalystTraffic=true,IncludeFromHistoryTurns=true,CopilotProductFilter="",IdeasTelemetrySource="All",TenantBased=false,ExtraOptions="MergeResponseActionList",ScenarioFilter="",MobileFilter="false",DateTimeFilter=false))
+WHERE (((NOT((AppName)==("AugmentationLoop")))
+AND
+(NOT((Scenario)==("OutlookOnCanvasConversationHistory"))))
+AND
+(REGEX(@"^(?i:pr1785838c5|pr17858386)$").IsMatch(OnboardingCommonHelper.ForayCommonHelper.MatchFlight(Flight, ',',"pr1785838c5:1334764|pr17858386:1334763",'|'))))
+AND
+((HelperMethods.IsDateTimeInRange(TIMESTAMP.ToString("o") , "2026-08-19 00:00:00.000", "2026-08-26 00:00:00.000")))
+;
+
 [LOWDISTINCTNESS(FLIGHT,SESSION_ID)]
 ROWSET1 = SELECT
 TurnId AS IG,
@@ -411,7 +481,7 @@ string.IsNullOrEmpty(ChatSATS_OfficeRegion) ? (int?)null :
 string.IsNullOrEmpty(ChatSATS_OfficeRegion) ? (int?)null :
             ((chatsat_signal_inferred_sat ?? 0) > 0 ? 1 : 0) AS Anon_string_IsNullOrEmpty_ChatSATS_OfficeRegion_int_null_chatsat_signal_inferred_sat_0_0_1_0_,
 ChatSATS_OfficeRegion != null ? 1 : 0 AS Anon_ChatSATS_OfficeRegion_null_1_0,
-ChatSATS_OfficeRegion != null ? 1 : 1 AS Anon_ChatSATS_OfficeRegion_null_1_1,
+1 AS Anon_ChatSATS_OfficeRegion_null_1_1,
 (chatsat_signal_inferred_sat ?? 0) > 0 || (chatsat_signal_inferred_dsat ?? 0) > 0 AS Anon__chatsat_signal_inferred_sat_0_0_chatsat_signal_inferred_dsat_0_0,
 !string.IsNullOrEmpty(UsedEntityAnnotations) && 
             Newtonsoft.Json.Linq.JArray.Parse(UsedEntityAnnotations)
@@ -1230,30 +1300,48 @@ ChatSATS_OfficeRegion != null ? 1 : 1 AS Anon_ChatSATS_OfficeRegion_null_1_1,
     ) ? 1 : 0 AS Anon__string_IsNullOrEmpty_ToolExecutionDetails_Newtonsoft_Json_Linq_JArray_Parse_ToolExecutionDetails_SelectMany_turn_turn_as_Newtonsoft_Json_Linq_JArray_new_Newtonsoft_Json_Linq_JArray_SelectMany_exec_exec_InnerToolExecutionDetails_null_e,
 Newtonsoft.Json.Linq.JArray.Parse(LLMRequests).Where(x => x.Value<string>("ModelClassification") == "REASONING_MODEL_INSTANT"  && x.Value<string>("HttpStatus") == "Success").Where(x => x.Value<Newtonsoft.Json.Linq.JObject>("TokensCount")?.Value<int?>("CachedTokensCount") != null).Select(x => x.Value<Newtonsoft.Json.Linq.JObject>("TokensCount")?.Value<int?>("OutputTokensCount")).Where(x => x > 0).Aggregate((int?)null, (sum, v) => v.HasValue ? (sum ?? 0) + v.Value : sum) AS LLMRequests_TokenCounts_sum_OutputTokensCount_REASONING_MODEL_INSTANT,
 Newtonsoft.Json.Linq.JArray.Parse(LLMRequests).Where(x => x.Value<string>("ModelClassification") == "REASONING_MODEL"  && x.Value<string>("HttpStatus") == "Success").Where(x => x.Value<Newtonsoft.Json.Linq.JObject>("TokensCount")?.Value<int?>("CachedTokensCount") != null).Select(x => x.Value<Newtonsoft.Json.Linq.JObject>("TokensCount")?.Value<int?>("OutputTokensCount")).Where(x => x > 0).Aggregate((int?)null, (sum, v) => v.HasValue ? (sum ?? 0) + v.Value : sum) AS LLMRequests_TokenCounts_sum_OutputTokensCount_REASONING_MODEL,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "RAG" : "RAG.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "RAG" : "RAG.T"] : 
-            (double?)null AS R9PerfStruct_RAG,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "SydneyLTR" : "SydneyLTR.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "SydneyLTR" : "SydneyLTR.T"] : 
-            (double?)null AS R9PerfStruct_SydneyLTR,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "LLM" : "LLM.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "LLM" : "LLM.T"] : 
-            (double?)null AS R9PerfStruct_LLM,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "Render" : "Render.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "Render" : "Render.T"] : 
-            (double?)null AS R9PerfStruct_ClientRenderLatency,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "RequestSend" : "RequestSend.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "RequestSend" : "RequestSend.T"] : 
-            (double?)null AS R9PerfStruct_ClientRequestSentLatency,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "ChatFTR_Model" : "ChatFTR_Model.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["T" == "Null" ? "ChatFTR_Model" : "ChatFTR_Model.T"] : 
-            (double?)null AS R9PerfStruct_SydneyFCFR,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "RAG" : "RAG.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "RAG" : "RAG.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_RAG,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "SydneyLTR" : "SydneyLTR.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "SydneyLTR" : "SydneyLTR.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_SydneyLTR,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "LLM" : "LLM.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "LLM" : "LLM.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_LLM,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "Render" : "Render.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "Render" : "Render.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_ClientRenderLatency,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "RequestSend" : "RequestSend.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "RequestSend" : "RequestSend.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_ClientRequestSentLatency,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null && r9["MeasuresDictionary"]["T" == "Null" ? "ChatFTR_Model" : "ChatFTR_Model.T"] != null
+            ? (double?)r9["MeasuresDictionary"]["T" == "Null" ? "ChatFTR_Model" : "ChatFTR_Model.T"]
+            : (double?)null)
+        .First()
+    : (double?)null AS R9PerfStruct_SydneyFCFR,
 (!string.IsNullOrEmpty(TurnLevelSystemActionsString) && Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString)
                       .Select(token => token.ToString())
                       .Where(str => !string.IsNullOrEmpty(str))
@@ -1421,7 +1509,7 @@ string.IsNullOrWhiteSpace(NoApologyDetectedState) || NoApologyDetectedState.ToLo
 !string.IsNullOrEmpty(TurnLevelResponseActionsString) && TurnLevelResponseActionsString.Contains("ResponseCopied") && TurnLevelResponseActionsString.Contains("copyLocation") && TurnLevelResponseActionsString.Contains("UserMessage") && TurnLevelResponseActionsString.Contains("copyTrigger") && TurnLevelResponseActionsString.Contains("Ctrl+C") ? 1 : 0 AS Anon__string_IsNullOrEmpty_TurnLevelResponseActionsString_TurnLevelResponseActionsString_Contains_ResponseCopied_TurnLevelResponseActionsString_Contains_copyLocation_TurnLevelResponseActionsString_Contains_UserMessage_TurnLevelResponseActio,
 !string.IsNullOrEmpty(TurnLevelResponseActionsString) && TurnLevelResponseActionsString.Contains("ResponseCopied") && TurnLevelResponseActionsString.Contains("copyLocation") && TurnLevelResponseActionsString.Contains("UserMessage") ? 1 : 0 AS Anon__string_IsNullOrEmpty_TurnLevelResponseActionsString_TurnLevelResponseActionsString_Contains_ResponseCopied_TurnLevelResponseActionsString_Contains_copyLocation_TurnLevelResponseActionsString_Contains_UserMessage_1_0,
 CitationCount != null ? CitationCount.Value : 0 AS Anon_CitationCount_null_CitationCount_Value_0,
-CitationCount != null ? 1 : 1 AS Anon_CitationCount_null_1_1,
+1 AS Anon_CitationCount_null_1_1,
 !string.IsNullOrEmpty(TurnLevelResponseActionsString) 
           && (Newtonsoft.Json.Linq.JArray.Parse(TurnLevelResponseActionsString)
             .Select(token => token.ToString())
@@ -1453,29 +1541,63 @@ SafetyRouterTriggered == null ? 1 : 0 AS Anon_SafetyRouterTriggered_null_1_0,
     (AvailabilityState.ToLower() == "canceled" || 
      AvailabilityState.ToLower() == "pass" || 
      AvailabilityState.ToLower() == "expectedfail") ? 1 : 0 AS Anon__string_IsNullOrWhiteSpace_AvailabilityState_AvailabilityState_ToLower_canceled_AvailabilityState_ToLower_pass_AvailabilityState_ToLower_expectedfail_1_0,
-!string.IsNullOrWhiteSpace(AvailabilityState) ? 1 : 1 AS Anon__string_IsNullOrWhiteSpace_AvailabilityState_1_1,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFSR.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFSR.T"] 
-            : (((!string.IsNullOrEmpty(ClientPlatform) && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android"))) && !string.IsNullOrEmpty(TurnLevelSystemActionsString) && 
-                Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatFSR", StringComparison.OrdinalIgnoreCase) && 
-                obj.ContainsKey("Latency") && obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Any() 
-                ? Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatFSR", StringComparison.OrdinalIgnoreCase) && obj.ContainsKey("Latency") && 
-                obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Select(obj => (double?)double.Parse(obj["Latency"].ToString())).First() 
-                : (double?)null) AS ChatFSR_WithSAL,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientLCFR.T"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientLCFR.T"] 
-            : (((!string.IsNullOrEmpty(ClientPlatform) && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android"))) && !string.IsNullOrEmpty(TurnLevelSystemActionsString) && 
-                Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatLCFR", StringComparison.OrdinalIgnoreCase) && 
-                obj.ContainsKey("Latency") && obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Any() 
-                ? Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatLCFR", StringComparison.OrdinalIgnoreCase) && obj.ContainsKey("Latency") && 
-                obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Select(obj => (double?)double.Parse(obj["Latency"].ToString())).First() 
-                : (double?)null) AS ChatLCFR_WithSAL,
+1 AS Anon__string_IsNullOrWhiteSpace_AvailabilityState_1_1,
+new[] {
+    !string.IsNullOrEmpty(R9Latency)
+        ? Newtonsoft.Json.Linq.JObject.Parse(R9Latency)
+        : null
+}
+.Select(r9 =>
+    r9 != null
+    && r9["MeasuresDictionary"] != null
+    && r9["MeasuresDictionary"]["ClientFSR.T"] != null
+        ? (double?)r9["MeasuresDictionary"]["ClientFSR.T"]
+        : !string.IsNullOrEmpty(ClientPlatform)
+          && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android")
+          && !string.IsNullOrEmpty(TurnLevelSystemActionsString)
+            ? new[] { Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString) }
+                .Select(actions =>
+                    actions
+                        .OfType<Newtonsoft.Json.Linq.JObject>()
+                        .Where(obj =>
+                            obj.ContainsKey("EventType")
+                            && String.Equals(obj["EventType"].ToString(), "ChatFSR", StringComparison.OrdinalIgnoreCase)
+                            && obj.ContainsKey("Latency")
+                            && obj["Latency"] != null
+                            && !string.IsNullOrEmpty(obj["Latency"].ToString()))
+                        .Select(obj => (double?)double.Parse(obj["Latency"].ToString()))
+                        .FirstOrDefault())
+                .First()
+            : (double?)null)
+.First() AS ChatFSR_WithSAL,
+new[] {
+    !string.IsNullOrEmpty(R9Latency)
+        ? Newtonsoft.Json.Linq.JObject.Parse(R9Latency)
+        : null
+}
+.Select(r9 =>
+    r9 != null
+    && r9["MeasuresDictionary"] != null
+    && r9["MeasuresDictionary"]["ClientLCFR.T"] != null
+        ? (double?)r9["MeasuresDictionary"]["ClientLCFR.T"]
+        : !string.IsNullOrEmpty(ClientPlatform)
+          && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android")
+          && !string.IsNullOrEmpty(TurnLevelSystemActionsString)
+            ? new[] { Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString) }
+                .Select(actions =>
+                    actions
+                        .OfType<Newtonsoft.Json.Linq.JObject>()
+                        .Where(obj =>
+                            obj.ContainsKey("EventType")
+                            && String.Equals(obj["EventType"].ToString(), "ChatLCFR", StringComparison.OrdinalIgnoreCase)
+                            && obj.ContainsKey("Latency")
+                            && obj["Latency"] != null
+                            && !string.IsNullOrEmpty(obj["Latency"].ToString()))
+                        .Select(obj => (double?)double.Parse(obj["Latency"].ToString()))
+                        .FirstOrDefault())
+                .First()
+            : (double?)null)
+.First() AS ChatLCFR_WithSAL,
 !string.IsNullOrEmpty(LLMRequests) &&  LLMRequests.Contains("\"REASONING_MODEL\"")? 1: 0 AS Anon__string_IsNullOrEmpty_LLMRequests_LLMRequests_Contains_REASONING_MODEL_1_0,
 !string.IsNullOrEmpty(TurnLevelSystemActionsString) ? Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString) .Select(t => t.ToString()) .Where(s => !string.IsNullOrEmpty(s)) .Select(s => Newtonsoft.Json.Linq.JObject.Parse(s)) .Where(o => String.Equals( o.Value<string>("EventType") ?? "", "CopilotSuccessResponseRendered", StringComparison.OrdinalIgnoreCase ) && !string.IsNullOrEmpty(o.Value<string>("CustomProperties") ?? "") ) .Select(o => Newtonsoft.Json.Linq.JObject.Parse(o.Value<string>("CustomProperties"))) .Select(cp => !string.IsNullOrEmpty(cp.Value<string>("totalJSHeapSize") ?? "") ? (double?)(double.Parse(cp.Value<string>("totalJSHeapSize"))) : (double?)null ) .Max() : (double?)null AS Anon__string_IsNullOrEmpty_TurnLevelSystemActionsString_Newtonsoft_Json_Linq_JArray_Parse_TurnLevelSystemActionsString_Select_t_t_ToString_Where_s_string_IsNullOrEmpty_s_Select_s_Newtonsoft_Json_Linq_JObject_Parse_s_Where_o_String_Equals_o__003,
 !string.IsNullOrEmpty(TurnLevelResponseActionsString) ? Newtonsoft.Json.Linq.JArray.Parse(TurnLevelResponseActionsString) .Select(t => t.ToString()) .Where(s => !string.IsNullOrEmpty(s)) .Select(s => Newtonsoft.Json.Linq.JObject.Parse(s)) .Where(o => String.Equals( o.Value<string>("EventType") ?? "", "QuerySubmit", StringComparison.OrdinalIgnoreCase ) && !string.IsNullOrEmpty(o.Value<string>("CustomProperties") ?? "") ) .Select(o => Newtonsoft.Json.Linq.JObject.Parse(o.Value<string>("CustomProperties"))) .Select(cp => !string.IsNullOrEmpty(cp.Value<string>("totalJSHeapSize") ?? "") ? (double?)(double.Parse(cp.Value<string>("totalJSHeapSize"))) : (double?)null ) .Max() : (double?)null AS Anon__string_IsNullOrEmpty_TurnLevelResponseActionsString_Newtonsoft_Json_Linq_JArray_Parse_TurnLevelResponseActionsString_Select_t_t_ToString_Where_s_string_IsNullOrEmpty_s_Select_s_Newtonsoft_Json_Linq_JObject_Parse_s_Where_o_String_Equal_003,
@@ -1540,7 +1662,7 @@ SafetyRouterTriggered == null ? 1 : 0 AS Anon_SafetyRouterTriggered_null_1_0,
       !string.IsNullOrEmpty(Scenario)
       && ((Scenario == "edgeweb") || (Scenario == "EdgeWebPaidCopilot"))
     ) ? 1 : 0 AS Anon__string_IsNullOrEmpty_Scenario_Scenario_edgeweb_Scenario_EdgeWebPaidCopilot_1_0,
-string.IsNullOrEmpty(TurnLevelResponseActionsString) ? 1 : 1 AS Anon_string_IsNullOrEmpty_TurnLevelResponseActionsString_1_1,
+1 AS Anon_string_IsNullOrEmpty_TurnLevelResponseActionsString_1_1,
 (
       // missing if:
       // 1) empty actions OR
@@ -1803,35 +1925,67 @@ string.IsNullOrEmpty(TurnLevelSystemActionsString) ? 1.0 : 0.0 AS Anon_string_Is
           && (obj["Domain"].ToString().ToLower().Contains("dataverse")
               || obj["Domain"].ToString().ToLower().Contains("businessapplications")))
       ? 1 : 0 AS Anon__string_IsNullOrEmpty_ToolExecutionDetails_Newtonsoft_Json_Linq_JArray_Parse_ToolExecutionDetails_SelectMany_outerToken_outerToken_as_Newtonsoft_Json_Linq_JArray_new_Newtonsoft_Json_Linq_JArray_Any_innerToken_innerToken_is_Newtonsoft_J,
-ToolExecutionDetails == null ? 1 : 1 AS Anon_ToolExecutionDetails_null_1_1,
+1 AS Anon_ToolExecutionDetails_null_1_1,
 !string.IsNullOrWhiteSpace(RealTimeConnection_Status) && RealTimeConnection_Status.ToLower() == "unexpectederror" ? 1 : 0 AS Anon__string_IsNullOrWhiteSpace_RealTimeConnection_Status_RealTimeConnection_Status_ToLower_unexpectederror_1_0,
-!string.IsNullOrWhiteSpace(RealTimeConnection_Status) ? 1: 1 AS Anon__string_IsNullOrWhiteSpace_RealTimeConnection_Status_1_1,
+1 AS Anon__string_IsNullOrWhiteSpace_RealTimeConnection_Status_1_1,
 (((double?)(RealTimeConnection_DurationInMs)) != null)? 1 : 0 AS Anon__RealTimeConnection_DurationInMs_null_1_0,
 ((double?)(RealTimeConnection_DurationInMs)) ?? 0 AS Anon_RealTimeConnection_DurationInMs_0,
 ((double?)(RealTimeConnection_DurationInMs)) != null AS Anon_RealTimeConnection_DurationInMs_null,
 (((double?)(RealTimeConnection_SetupLatencyInMs)) != null)? 1 : 0 AS Anon__RealTimeConnection_SetupLatencyInMs_null_1_0,
 ((double?)(RealTimeConnection_SetupLatencyInMs)) ?? 0 AS Anon_RealTimeConnection_SetupLatencyInMs_0,
 ((double?)(RealTimeConnection_SetupLatencyInMs)) != null AS Anon_RealTimeConnection_SetupLatencyInMs_null,
-( !string.IsNullOrEmpty(R9Latency) && !string.IsNullOrEmpty(RealtimeTurnResult) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFirstAudioRenderLatency"] != null ) && (Newtonsoft.Json.Linq.JObject.Parse(RealtimeTurnResult).Value<bool?>("IsFirstAudioResponseReceived") == true)   ? 
-                         (int?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFirstAudioRenderLatency"] : (int?)null AS VoiceFAR_Filtered,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-            && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFTR.T"] != null ? (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFTR.T"] 
-            : (!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFirstTextRenderLatency"] != null ? 
-            (double?)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ClientFirstTextRenderLatency"] 
-            : ((((!string.IsNullOrEmpty(ClientPlatform) && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android"))) && !string.IsNullOrEmpty(TurnLevelSystemActionsString) && 
-                Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatFCFR", StringComparison.OrdinalIgnoreCase) && 
-                obj.ContainsKey("Latency") && obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Any() 
-                ? Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString).OfType<Newtonsoft.Json.Linq.JObject>().Where(obj => obj.ContainsKey("EventType") && 
-                String.Equals(obj["EventType"].ToString(), "ChatFCFR", StringComparison.OrdinalIgnoreCase) && obj.ContainsKey("Latency") && 
-                obj["Latency"] != null && !string.IsNullOrEmpty(obj["Latency"].ToString())).Select(obj => (double?)double.Parse(obj["Latency"].ToString())).First() 
-                : (double?)null))) AS ChatFCFR_WithSAL,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"] != null ? 
-      Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"].ToString() : 
-      null AS R9LatencyTagsDic,
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null ? 
-      Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"].ToString() : 
-      null AS R9LatencyMeasureDic,
+!string.IsNullOrEmpty(R9Latency) && !string.IsNullOrEmpty(RealtimeTurnResult)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 =>
+            r9["MeasuresDictionary"] != null
+            && r9["MeasuresDictionary"]["ClientFirstAudioRenderLatency"] != null
+            && Newtonsoft.Json.Linq.JObject.Parse(RealtimeTurnResult).Value<bool?>("IsFirstAudioResponseReceived") == true
+                ? (int?)r9["MeasuresDictionary"]["ClientFirstAudioRenderLatency"]
+                : (int?)null)
+        .First()
+    : (int?)null AS VoiceFAR_Filtered,
+new[] {
+    !string.IsNullOrEmpty(R9Latency)
+        ? Newtonsoft.Json.Linq.JObject.Parse(R9Latency)
+        : null
+}
+.Select(r9 =>
+    r9 != null
+    && r9["MeasuresDictionary"] != null
+    && r9["MeasuresDictionary"]["ClientFTR.T"] != null
+        ? (double?)r9["MeasuresDictionary"]["ClientFTR.T"]
+        : r9 != null
+          && r9["MeasuresDictionary"] != null
+          && r9["MeasuresDictionary"]["ClientFirstTextRenderLatency"] != null
+            ? (double?)r9["MeasuresDictionary"]["ClientFirstTextRenderLatency"]
+            : !string.IsNullOrEmpty(ClientPlatform)
+              && (ClientPlatform.ToLower() == "ios" || ClientPlatform.ToLower() == "android")
+              && !string.IsNullOrEmpty(TurnLevelSystemActionsString)
+                ? new[] { Newtonsoft.Json.Linq.JArray.Parse(TurnLevelSystemActionsString) }
+                    .Select(actions =>
+                        actions
+                            .OfType<Newtonsoft.Json.Linq.JObject>()
+                            .Where(obj =>
+                                obj.ContainsKey("EventType")
+                                && String.Equals(obj["EventType"].ToString(), "ChatFCFR", StringComparison.OrdinalIgnoreCase)
+                                && obj.ContainsKey("Latency")
+                                && obj["Latency"] != null
+                                && !string.IsNullOrEmpty(obj["Latency"].ToString()))
+                            .Select(obj => (double?)double.Parse(obj["Latency"].ToString()))
+                            .FirstOrDefault())
+                    .First()
+                : (double?)null)
+.First() AS ChatFCFR_WithSAL,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["TagsDictionary"] != null ? r9["TagsDictionary"].ToString() : null)
+        .First()
+    : null AS R9LatencyTagsDic,
+!string.IsNullOrEmpty(R9Latency)
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+        .Select(r9 => r9["MeasuresDictionary"] != null ? r9["MeasuresDictionary"].ToString() : null)
+        .First()
+    : null AS R9LatencyMeasureDic,
 (
             !string.IsNullOrEmpty(ExtensionExecutionFlow_ExtensionNames)
             && ExtensionExecutionFlow_ExtensionNames.ToLower().Contains("imagegenerationextension")
@@ -1839,15 +1993,19 @@ ToolExecutionDetails == null ? 1 : 1 AS Anon_ToolExecutionDetails_null_1_1,
 Scenario != "PowerAppsSidepaneWorkCopilot"
 && Scenario != "PowerAppsSidepaneWebIncludedCopilot"
 && !string.IsNullOrEmpty(DataverseRequests)
-&& Newtonsoft.Json.Linq.JArray.Parse(DataverseRequests)
-    .Where(token => token is Newtonsoft.Json.Linq.JObject)
-    .Cast<Newtonsoft.Json.Linq.JObject>()
-    .Any(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
-  ? (long?)Newtonsoft.Json.Linq.JArray.Parse(DataverseRequests)
-      .Where(token => token is Newtonsoft.Json.Linq.JObject)
-      .Cast<Newtonsoft.Json.Linq.JObject>()
-      .Where(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
-      .Max(obj => long.Parse(obj["Latency"].ToString()))
+  ? new[] { Newtonsoft.Json.Linq.JArray.Parse(DataverseRequests) }
+      .Select(requests =>
+          requests
+              .Where(token => token is Newtonsoft.Json.Linq.JObject)
+              .Cast<Newtonsoft.Json.Linq.JObject>()
+              .Any(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
+            ? (long?)requests
+                .Where(token => token is Newtonsoft.Json.Linq.JObject)
+                .Cast<Newtonsoft.Json.Linq.JObject>()
+                .Where(obj => obj["Latency"] != null && obj["Latency"].Type != Newtonsoft.Json.Linq.JTokenType.Null)
+                .Max(obj => long.Parse(obj["Latency"].ToString()))
+            : (long?)null)
+      .First()
   : (long?)null AS DataverseLatencyTotalMs_Turn,
 Scenario != "PowerAppsSidepaneWorkCopilot"
     && Scenario != "PowerAppsSidepaneWebIncludedCopilot"
@@ -1869,7 +2027,7 @@ IsXpiaToolOutputTriggered == true ? 1 : 0 AS Anon_IsXpiaToolOutputTriggered_true
 IsBotResponseBlockListTriggered == true ? 1 : 0 AS Anon_IsBotResponseBlockListTriggered_true_1_0,
 IsUserMessageBlockListTriggered == true ? 1 : 0 AS Anon_IsUserMessageBlockListTriggered_true_1_0,
 IsUpiaUserMessageTriggered == true ? 1 : 0 AS Anon_IsUpiaUserMessageTriggered_true_1_0,
-isSearchTriggered == null ? 1 : 1 AS Anon_isSearchTriggered_null_1_1,
+1 AS Anon_isSearchTriggered_null_1_1,
 !string.IsNullOrEmpty(TurnLevelResponseActionsString) && TurnLevelResponseActionsString.Contains("QuerySubmit") ? 1 : 0 AS Anon__string_IsNullOrEmpty_TurnLevelResponseActionsString_TurnLevelResponseActionsString_Contains_QuerySubmit_1_0,
 !string.IsNullOrEmpty(EditableBlockGenerated)
             && Newtonsoft.Json.Linq.JArray.Parse(EditableBlockGenerated).Any(block =>
@@ -1881,8 +2039,8 @@ isSearchTriggered == null ? 1 : 1 AS Anon_isSearchTriggered_null_1_1,
                 String.Equals(block.Value<string>("BlockType"), "code", StringComparison.OrdinalIgnoreCase)
                 && block.Value<int?>("BlockCount") > 0)
             ? 1 : 0 AS Anon__string_IsNullOrEmpty_EditableBlockGenerated_Newtonsoft_Json_Linq_JArray_Parse_EditableBlockGenerated_Any_block_String_Equals_block_Value_string_BlockType_code_StringComparison_OrdinalIgnoreCase_block_Value_int_BlockCount_0_1_0,
-!string.IsNullOrEmpty(EditableBlockGenerated) ? 1 : 1 AS Anon__string_IsNullOrEmpty_EditableBlockGenerated_1_1,
-!string.IsNullOrEmpty(LLMRequests) ? 1 : 1 AS Anon__string_IsNullOrEmpty_LLMRequests_1_1,
+1 AS Anon__string_IsNullOrEmpty_EditableBlockGenerated_1_1,
+1 AS Anon__string_IsNullOrEmpty_LLMRequests_1_1,
 ScorecardSessionId AS Session,
 ObjectId AS RAWMUID,
 BotConversationId AS SESSION_ID,
@@ -1909,96 +2067,70 @@ Tone AS Tone_Segment,
     : "Others"
     )
   : "Others" AS Top_Locales,
-!string.IsNullOrEmpty(R9Latency)  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"] != null 
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["LLMOrcCallCnt"] != null 
-  && (int)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["LLMOrcCallCnt"] == 1
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ItrCntRAG"] != null 
-  && (int)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ItrCntRAG"] == 0
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["FirstRespToolCnt"] != null 
-  && (int)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["FirstRespToolCnt"] == 0
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["LLMSlctorClas"] != null 
-  && (
-      Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["LLMSlctorClas"].ToString() == "DEEP_LEO" 
-      || Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["LLMSlctorClas"].ToString() == "REASONING_MODEL_INSTANT"
-  )      
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["PrmImg"] != null 
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["PrmImg"].ToString() == ""
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["QryAnnTyp"] != null 
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["QryAnnTyp"].ToString() == ""
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["DclAgn"] != null 
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["TagsDictionary"]["DclAgn"].ToString() == "" 
-    ? "Express" : 
-!string.IsNullOrEmpty(R9Latency) && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"] != null 
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ItrCntRAG"] != null && (int)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["ItrCntRAG"] >= 1
-  && Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["RAGWrkCnt"] != null && (int)Newtonsoft.Json.Linq.JObject.Parse(R9Latency)["MeasuresDictionary"]["RAGWrkCnt"] >= 1 ? "3SSingleIteration" : "Others" AS Perf_Segment,
+!string.IsNullOrEmpty(R9Latency)
+  ? new[] { Newtonsoft.Json.Linq.JObject.Parse(R9Latency) }
+      .Select(r9 =>
+          r9["MeasuresDictionary"] != null
+          && r9["TagsDictionary"] != null
+          && r9["MeasuresDictionary"]["LLMOrcCallCnt"] != null
+          && (int)r9["MeasuresDictionary"]["LLMOrcCallCnt"] == 1
+          && r9["MeasuresDictionary"]["ItrCntRAG"] != null
+          && (int)r9["MeasuresDictionary"]["ItrCntRAG"] == 0
+          && r9["MeasuresDictionary"]["FirstRespToolCnt"] != null
+          && (int)r9["MeasuresDictionary"]["FirstRespToolCnt"] == 0
+          && r9["TagsDictionary"]["LLMSlctorClas"] != null
+          && (
+              r9["TagsDictionary"]["LLMSlctorClas"].ToString() == "DEEP_LEO"
+              || r9["TagsDictionary"]["LLMSlctorClas"].ToString() == "REASONING_MODEL_INSTANT"
+          )
+          && r9["TagsDictionary"]["PrmImg"] != null
+          && r9["TagsDictionary"]["PrmImg"].ToString() == ""
+          && r9["TagsDictionary"]["QryAnnTyp"] != null
+          && r9["TagsDictionary"]["QryAnnTyp"].ToString() == ""
+          && r9["TagsDictionary"]["DclAgn"] != null
+          && r9["TagsDictionary"]["DclAgn"].ToString() == ""
+            ? "Express"
+            : r9["MeasuresDictionary"] != null
+              && r9["MeasuresDictionary"]["ItrCntRAG"] != null
+              && (int)r9["MeasuresDictionary"]["ItrCntRAG"] >= 1
+              && r9["MeasuresDictionary"]["RAGWrkCnt"] != null
+              && (int)r9["MeasuresDictionary"]["RAGWrkCnt"] >= 1
+                ? "3SSingleIteration"
+                : "Others")
+      .First()
+  : "Others" AS Perf_Segment,
 !string.IsNullOrEmpty(ProductInformation)
-    ? (
-        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserType"]?.ToString()?.ToUpperInvariant() == "AAD"
-            ? (
-                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "STARTER"
+    ? new[] { Newtonsoft.Json.Linq.JObject.Parse(ProductInformation) }
+        .Select(product =>
+            product["UserType"]?.ToString()?.ToUpperInvariant() == "AAD"
+                ? product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "STARTER"
                     ? "AAD Starter"
-                    : (
-                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "PREMIUM"
-                            ? "AAD Premium"
-                            : (
-                                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "FREE"
-                                    ? "AAD Free"
-                                    : (
-                                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "COPILOTUNLIMITED"
-                                            ? "AAD CopilotUnlimited"
-                                            : (
-                                                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "NONE"
-                                                    ? "AAD None"
-                                                    : (
-                                                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "UNKNOWN"
-                                                            ? "AAD"
-                                                            : "AAD"
-                                                    )
-                                            )
-                                    )
-                            )
-                    )
-            )
-            : (
-                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserType"]?.ToString()?.ToUpperInvariant() == "MSA"
-                    ? (
-                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "STARTER"
-                            ? "MSA Starter"
-                            : (
-                                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "PREMIUM"
-                                    ? "MSA Premium"
-                                    : (
-                                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "FREE"
-                                            ? "MSA Free"
-                                            : (
-                                                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "COPILOTUNLIMITED"
-                                                    ? "MSA CopilotUnlimited"
-                                                    : (
-                                                        Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "NONE"
-                                                            ? "MSA None"
-                                                            : (
-                                                                Newtonsoft.Json.Linq.JObject.Parse(ProductInformation)["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "UNKNOWN"
-                                                                    ? "MSA"
-                                                                    : "MSA"
-                                                            )
-                                                    )
-                                            )
-                                    )
-                            )
-                    )
-                    : null
-            )
-    )
+                    : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "PREMIUM"
+                        ? "AAD Premium"
+                        : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "FREE"
+                            ? "AAD Free"
+                            : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "COPILOTUNLIMITED"
+                                ? "AAD CopilotUnlimited"
+                                : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "NONE"
+                                    ? "AAD None"
+                                    : "AAD"
+                : product["UserType"]?.ToString()?.ToUpperInvariant() == "MSA"
+                    ? product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "STARTER"
+                        ? "MSA Starter"
+                        : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "PREMIUM"
+                            ? "MSA Premium"
+                            : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "FREE"
+                                ? "MSA Free"
+                                : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "COPILOTUNLIMITED"
+                                    ? "MSA CopilotUnlimited"
+                                    : product["UserLicenseType"]?.ToString()?.ToUpperInvariant() == "NONE"
+                                        ? "MSA None"
+                                        : "MSA"
+                    : null)
+        .First()
     : null AS UserLicenseType_Segment,
 AgentRuntime=="DALiveReference" ? "DALiveReference" : "Others" AS IsDeclarativeAgentLiveReference
-FROM (VIEW @"abfss://filesystem@substrateadlsg2neuprod.dfs.core.windows.net/local/MSAI/BizChatOnline/MetricSet/Fusion_MetricSet_BizChatOnline.view" PARAMS (StartDateTime="2026-08-19T00:00:00",EndDateTime="2026-08-25T23:59:59",Flights="pr1785838c5:1334764|pr17858386:1334763",Region="EU",ManagementGroup="o365substratenorthstarbizchatservice",TrafficFiltersDeployRing="{TrafficFilters.DeployRing}",TrafficFiltersCosmicPartition="{TrafficFilters.Partition}",IncludeFeedback=false,IncludeScores=false,PropagateFlightToAllTurns=false,MetaOSFilter=false,IsEchoExperiment=false,FilterPassiveUsers=true,CustomInput="",StripAllocationIds=true,Variant3SFlightOverride=false,TreatmentAssignmentDataSource="odinvariantconfigv2",ConsumptionMode="Daily,IncludeServerSessionId,IncludeFeedback",IncludeFastScores=true,IncludeCatalystTraffic=true,IncludeFromHistoryTurns=true,CopilotProductFilter="",IdeasTelemetrySource="All",TenantBased=false,ExtraOptions="MergeResponseActionList",ScenarioFilter="",MobileFilter="false",DateTimeFilter=false))
-WHERE (((NOT((AppName)==("AugmentationLoop")))
-AND
-(NOT((Scenario)==("OutlookOnCanvasConversationHistory"))))
-AND
-(REGEX(@"^(?i:pr1785838c5|pr17858386)$").IsMatch(OnboardingCommonHelper.ForayCommonHelper.MatchFlight(Flight, ',',"pr1785838c5:1334764|pr17858386:1334763",'|'))))
-AND
-((HelperMethods.IsDateTimeInRange(TIMESTAMP.ToString("o") , "2026-08-19 00:00:00.000", "2026-08-26 00:00:00.000")))
+FROM FilteredInput
 ;
 
 // Combined input rowset from all sources. <ExtractionStepTransformer>
@@ -7520,21 +7652,26 @@ USING Microsoft.DataMining.CSharpExpressionProcessor.Processor.CSharpExpressionP
   <Column Name=""Anon_Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_s"" Type=""bool""><![CDATA[((bool)(Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_string != null))]]></Column>
   <Column Name=""Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_string"" Type=""System.Nullable&lt;double&gt;""><![CDATA[((System.Nullable<double>)(!string.IsNullOrEmpty(R9LatencyMeasureDic) 
       && !string.IsNullOrEmpty(R9LatencyTagsDic) 
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyMeasureDic)[""LLMOrcCallCnt""] != null 
-      && (int)Newtonsoft.Json.Linq.JObject.Parse(R9LatencyMeasureDic)[""LLMOrcCallCnt""] == 1
-      && !string.IsNullOrEmpty(R9LatencyTagsDic) 
-      && (SourceBranch == ""Magic"" || SourceBranch == ""Avalon"")
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""LLMSlctorClas""] != null 
-      && (
-          Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""LLMSlctorClas""].ToString() == ""DEEP_LEO"" 
-          || Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""LLMSlctorClas""].ToString() == ""REASONING_MODEL_INSTANT""
-      )      
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""PrmImg""] != null 
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""PrmImg""].ToString() == """"
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""QryAnnTyp""] != null 
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""QryAnnTyp""].ToString() == """"
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""DclAgn""] != null 
-      && Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic)[""DclAgn""].ToString() == """"
+      && new[] { Newtonsoft.Json.Linq.JObject.Parse(R9LatencyMeasureDic) }
+          .Select(measures =>
+              measures[""LLMOrcCallCnt""] != null
+              && (int)measures[""LLMOrcCallCnt""] == 1
+              && (SourceBranch == ""Magic"" || SourceBranch == ""Avalon"")
+              && new[] { Newtonsoft.Json.Linq.JObject.Parse(R9LatencyTagsDic) }
+                  .Select(tags =>
+                      tags[""LLMSlctorClas""] != null
+                      && (
+                          tags[""LLMSlctorClas""].ToString() == ""DEEP_LEO""
+                          || tags[""LLMSlctorClas""].ToString() == ""REASONING_MODEL_INSTANT""
+                      )
+                      && tags[""PrmImg""] != null
+                      && tags[""PrmImg""].ToString() == """"
+                      && tags[""QryAnnTyp""] != null
+                      && tags[""QryAnnTyp""].ToString() == """"
+                      && tags[""DclAgn""] != null
+                      && tags[""DclAgn""].ToString() == """")
+                  .First())
+          .First()
       ? ChatFCFR_WithSAL : null))]]></Column>
   <Column Name=""Anon_Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_s_001"" Type=""double""><![CDATA[((double)(Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_string ?? 0))]]></Column>
   <Column Name=""Anon__Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_"" Type=""int""><![CDATA[((int)((Anon__string_IsNullOrEmpty_R9LatencyMeasureDic_string_IsNullOrEmpty_R9LatencyTagsDic_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_null_int_Newtonsoft_Json_Linq_JObject_Parse_R9LatencyMeasureDic_LLMOrcCallCnt_1_string != null)? 1 : 0))]]></Column>
@@ -12131,4 +12268,3 @@ TO
 @"/local/projects/users/lsrep/Foray/2026/08/19/AnaExp_Default_Job0_Run0__Pri_2.1_lsrep_AutoJob_20260826_175751_944n1791_BizChatOnlineMetricsCDP.IndicatorMetrics.AB.Standard_2026-08-19T0000_2026-08-26T0000__histogram.txt"
 WITH STREAMEXPIRY "7.00:00:00"
 ;
-

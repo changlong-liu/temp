@@ -158,11 +158,16 @@ USING OnboardingCommonHelper;
    HardwareSkuType AS HardwareSkuType,
    Ring AS Ring,
    Scopes AS sssUsageQualityOfServiceMetricNamespace_Scopes,
+   Scopes AS Scopes,
    RequestDateTimeInUTC AS sssUsageQualityOfServiceMetricNamespace_RequestDateTimeInUTC,
    ImpressionId AS sssUsageQualityOfServiceMetricNamespace_ImpressionId,
    NormalizedLogicalId AS sssUsageQualityOfServiceMetricNamespace_NormalizedLogicalId,
    ClientSessionId AS sssUsageQualityOfServiceMetricNamespace_ClientSessionId,
-   RandomizationId AS sssUsageQualityOfServiceMetricNamespace_RandomizationId
+   RandomizationId AS sssUsageQualityOfServiceMetricNamespace_RandomizationId,
+   ((MangroveInlineOperations.ParseDatetime((RequestDateTimeInUTC.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK")))) >= (MangroveInlineOperations.ParseDatetime("2026-08-25 00:00:00"))) && ((MangroveInlineOperations.ParseDatetime((RequestDateTimeInUTC.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK")))) < (MangroveInlineOperations.ParseDatetime("2026-08-26 00:00:00"))) AS filterConditiona83f8e1c8a6b4aee8318f126e31d3f80,
+   (OnboardingCommonHelper.ForayCommonHelper.StandardizedFlightParser(Flight, "enablesynonymexpansionalterationv2cf:1348139|enablesynonymexpansionalterationv2:1348138")) != "" AS filterConditionce27aa374203434eb6a04db2a9d05455,
+   OnboardingCommonHelper.ForayCommonHelper.StandardizedFlightParser(Flight, "enablesynonymexpansionalterationv2cf:1348139|enablesynonymexpansionalterationv2:1348138") AS FLIGHT,
+   RequestDateTimeInUTC.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK") AS REQUEST_TIME
             FROM
             (VIEW @"/shares/exchange.storage.prod/local/MSAI/SSS/MetricSet/MetricSet_MSAI_SubstrateSearch_QoS_Usage.view" 
 PARAMS (StartDate = "2026-08-25", EndDate = "2026-08-25", TreatmentAssignmentDataSource = "odinvariantconfigv2", Flights = "enablesynonymexpansionalterationv2cf:1348139|enablesynonymexpansionalterationv2:1348138", EntryPoints = "m365shell.filesintaskbar;m365shell.peopleflyout;exchangeshared.owa;exchangeshared.owa.react;exchangeshared.owa.react.mini;exchangeshared.owa.react.compose;exchangeshared.outlookuniversal.email;officeshared.outlookdesktop;exchangeshared.outlookmobile.ios.email;exchangeshared.outlookmobile.android.email;exchangeshared.outlookmobile.ios.email.cloudcache;exchangeshared.outlookmobile.android.email.cloudcache;exchangeshared.outlookmac.email;exchangeshared.outlookmac.email.cloudcache;officecom.aihub.search;officeshared.aihub.mobile.android.search;officeshared.aihub.mobile.ios.search;officecom.officehome;sharepointshared.hubsitesearch;sharepointshared.teamsitesearch;sharepointshared.msw;sharepointshared.sphomeweb;sharepointshared.commsitesearch;sharepointshared.spclassic_basicsearchcenter;sharepointshared.spclassic_enterprisesearchcenter;sharepointshared.spclassic_sitesearch;bingcom.msb.ux.workserp;bingcom.msb.ux.webserp;sharepointshared.onedriveweb", Rings = "WW;MSIT;SDFV2;SIP", CustomInput = "shares/exchange.storage.prod/local", Workload = "Outlook", DailyWithHourlyFallback = true, FlightAppId = "Search", NoFlightFilter = false, FilterDevicesWithMultiplePuids = false, TrafficFiltersPartner = "{TrafficFilters.Partner}", TrafficFiltersScenario = "{TrafficFilters.Scenario}", TrafficFiltersDeployRing = "{TrafficFilters.DeployRing}", RunOnCachedTAData = false, RemoveSingleSuggestionSessions = false, LogicalEntryPointsForUsingComputedCVID = "", EnableLivDebug = false, EUCutOffEnable = false, UseCafe = false))
